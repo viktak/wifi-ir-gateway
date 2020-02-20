@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+%pageheader%
+<body>
+    <div class="container-fluid">
+        <div class="jumbotron">
+            <h1>Node Configuration Console</h1>
+            <h3>Part of the ActoSenso Platform</h3>
+        </div>
+        %alert%
+        <form class="form-horizontal" method="post">
+            <div class="panel panel-default">
+                <div class="panel-heading">Login</div>
+                <div class="panel-body">
+                    <div class="well well-sm">
+                        To access the selected features you must log in.
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-2" for="username">User name:</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Enter your user name" maxlength="10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-2" for="password">Password:</label>
+                        <div class="col-sm-10">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" maxlength="32">
+                        </div>
+                    </div>
+                    <!--
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <div class="checkbox">
+                                <label><input type="checkbox">Remember me</label>
+                            </div>
+                        </div>
+                    </div>
+                    -->
+
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <button type="submit" class="btn btn-default">Log in</button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </form>
+        <p></p>
+        <div class="well well-sm">
+            (c)2016-2020 Viktor Takacs - <a href="http://diy.viktak.com" target="_blank">diy.viktak.com</a>
+        </div>
+
+    </div>
+</body>
+</html>

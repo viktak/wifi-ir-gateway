@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+%pageheader%
+<body>
+    <div class="container-fluid">
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="/">ActoSenso Node</a>
+                </div>
+                <div class="collapse navbar-collapse" id="myNavbar">
+                    <ul class="nav navbar-nav">
+                        <li class="active"><a href="/status.html">Status</a></li>
+                        <li><a href="/generalsettings.html">General</a></li>
+                        <li><a href="/networksettings.html">Network</a></li>
+                        <li><a href="/tools.html">Tools</a></li>
+                        <li><a href="/login.html?DISCONNECT=YES">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="well">
+            These are the current settings of this ESP.
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">System</div>
+            <div class="panel-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                Value
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                ESP Chip ID
+                            </td>
+                            <td>
+                                %chipid%
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Friendly name
+                            </td>
+                            <td>
+                                %friendlyname%
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Current time</td>
+                            <td>%currenttime%</td>
+                        </tr>
+                        <tr>
+                            <td>Up time </td>
+                            <td>%uptime%</td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                Reason for last reset
+                            </td>
+                            <td>
+                                %lastresetreason%
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Flash memory size
+                            </td>
+                            <td>
+                                %flashchipsize% bytes
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Flash memory speed</td>
+                            <td>%flashchipspeed% Hz</td>
+                        </tr>
+                        <tr>
+                            <td>Free heap size</td>
+                            <td>%freeheapsize% bytes</td>
+                        </tr>
+                        <tr>
+                            <td>Free sketch size</td>
+                            <td>%freesketchspace% bytes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Network</div>
+            <div class="panel-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                Value
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                Networking mode
+                            </td>
+                            <td>
+                                %wifimode%
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                MAC address
+                            </td>
+                            <td>
+                                %macaddress%
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>SSID (network name)</td>
+                            <td>%ssid%</td>
+                        </tr>
+                        <tr>
+                            <td>Network address</td>
+                            <td>%networkaddress%</td>
+                        </tr>
+                        <tr>
+                            <td>Subnet mask</td>
+                            <td>%subnetmask%</td>
+                        </tr>
+                        <tr>
+                            <td>Gateway</td>
+                            <td>%gateway%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="well well-sm">
+          (c)2016-2020 Viktor Takacs - <a href="http://diy.viktak.com" target="_blank">diy.viktak.com</a>
+        </div>
+
+    </div>
+</body>
+</html>
