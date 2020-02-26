@@ -34,8 +34,10 @@
 #include "NTP.h"
 
 #include "structs.h"
-#include "buttons.h"
 
 #include "user_interface.h"
 
 #include "ircodes.h"
+#include "ir-sony-rm-ed022-raw.h"
+#include "ir-sony-rm-lp211-raw.h"
+#include "ir-toyotomi-car-27paun-raw.h"

@@ -25,32 +25,3 @@
 #define I2C_INT_GPIO 12
 
 #define ACTIVITY_LED_GPIO 16
-
-//  IR key codes
-#define IR_PWM_R_0 0x1067906F
-#define IR_PWM_R_1 0x1067B04F
-#define IR_PWM_R_2 0x10678877
-#define IR_PWM_R_3 0x1067A857
-#define IR_PWM_R_4 0x10679867
-#define IR_PWM_R_5 0x1067B847
-#define IR_PWM_R_6 0x1067827D
-#define IR_PWM_R_7 0x1067A25D
-
-#define IR_PWM_G_0 0x106710EF
-#define IR_PWM_G_1 0x106730CF
-#define IR_PWM_G_2 0x106708F7
-#define IR_PWM_G_3 0x106728D7
-#define IR_PWM_G_4 0x106718E7
-#define IR_PWM_G_5 0x106738C7
-#define IR_PWM_G_6 0x106702FD
-#define IR_PWM_G_7 0x106722DD
-
-#define IR_PWM_B_0 0x106750AF
-#define IR_PWM_B_1 0x1067708F
-#define IR_PWM_B_2 0x106748B7
-#define IR_PWM_B_3 0x10676897
-#define IR_PWM_B_4 0x106758A7
-#define IR_PWM_B_5 0x10677887
-#define IR_PWM_B_6 0x106742BD
-#define IR_PWM_B_7 0x1067629D
-
