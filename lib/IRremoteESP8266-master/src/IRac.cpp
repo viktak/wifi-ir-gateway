@@ -45,7 +45,7 @@ IRac::IRac(const uint16_t pin, const bool inverted, const bool use_modulation) {
   _inverted = inverted;
   _modulation = use_modulation;
   initState(&next);
-  _prev = next;
+  this->markAsSent();
 }
 
 void IRac::initState(stdAc::state_t *state,
@@ -466,7 +466,8 @@ void IRac::electra(IRElectraAc *ac,
                    const bool on, const stdAc::opmode_t mode,
                    const float degrees, const stdAc::fanspeed_t fan,
                    const stdAc::swingv_t swingv,
-                   const stdAc::swingh_t swingh) {
+                   const stdAc::swingh_t swingh, const bool turbo,
+                   const bool lighttoggle, const bool clean) {
   ac->begin();
   ac->setPower(on);
   ac->setMode(ac->convertMode(mode));
@@ -475,11 +476,12 @@ void IRac::electra(IRElectraAc *ac,
   ac->setSwingV(swingv != stdAc::swingv_t::kOff);
   ac->setSwingH(swingh != stdAc::swingh_t::kOff);
   // No Quiet setting available.
-  // No Turbo setting available.
+  ac->setTurbo(turbo);
+  ac->setLightToggle(lighttoggle);
   // No Light setting available.
   // No Econo setting available.
   // No Filter setting available.
-  // No Clean setting available.
+  ac->setClean(clean);
   // No Beep setting available.
   // No Sleep setting available.
   // No Clock setting available.
@@ -940,7 +942,8 @@ void IRac::panasonic(IRPanasonicAc *ac, const panasonic_ac_remote_model_t model,
                      const bool on, const stdAc::opmode_t mode,
                      const float degrees, const stdAc::fanspeed_t fan,
                      const stdAc::swingv_t swingv, const stdAc::swingh_t swingh,
-                     const bool quiet, const bool turbo, const int16_t clock) {
+                     const bool quiet, const bool turbo, const bool filter,
+                     const int16_t clock) {
   ac->begin();
   ac->setModel(model);
   ac->setPower(on);
@@ -951,9 +954,9 @@ void IRac::panasonic(IRPanasonicAc *ac, const panasonic_ac_remote_model_t model,
   ac->setSwingHorizontal(ac->convertSwingH(swingh));
   ac->setQuiet(quiet);
   ac->setPowerful(turbo);
+  ac->setIon(filter);
   // No Light setting available.
   // No Econo setting available.
-  // No Filter setting available.
   // No Clean setting available.
   // No Beep setting available.
   // No Sleep setting available.
@@ -967,7 +970,8 @@ void IRac::samsung(IRSamsungAc *ac,
                    const bool on, const stdAc::opmode_t mode,
                    const float degrees,
                    const stdAc::fanspeed_t fan, const stdAc::swingv_t swingv,
-                   const bool quiet, const bool turbo, const bool clean,
+                   const bool quiet, const bool turbo, const bool light,
+                   const bool filter, const bool clean,
                    const bool beep, const bool prevpower,
                    const bool forcepower) {
   ac->begin();
@@ -980,9 +984,9 @@ void IRac::samsung(IRSamsungAc *ac,
   // No Horizontal swing setting available.
   ac->setQuiet(quiet);
   ac->setPowerful(turbo);
-  // No Light setting available.
+  ac->setDisplay(light);
   // No Econo setting available.
-  // No Filter setting available.
+  ac->setIon(filter);
   ac->setClean(clean);
   ac->setBeep(beep);
   // No Sleep setting available.
@@ -1218,6 +1222,9 @@ stdAc::state_t IRac::handleToggles(const stdAc::state_t desired,
         result.power = desired.power ^ prev->power;
         result.light = desired.light ^ prev->light;
         break;
+      case decode_type_t::ELECTRA_AC:
+        result.light = desired.light ^ prev->light;
+        break;
       case decode_type_t::MIDEA:
       case decode_type_t::HITACHI_AC424:
         if ((desired.swingv == stdAc::swingv_t::kOff) ^
@@ -1388,7 +1395,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     {
       IRElectraAc ac(_pin, _inverted, _modulation);
       electra(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
-              send.swingh);
+              send.swingh, send.turbo, send.light, send.clean);
       break;
     }
 #endif  // SEND_ELECTRA_AC
@@ -1556,7 +1563,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     {
       IRSamsungAc ac(_pin, _inverted, _modulation);
       samsung(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
-              send.quiet, send.turbo, send.clean, send.beep, prev->power);
+              send.quiet, send.turbo, send.light, send.filter, send.clean,
+              send.beep, prev->power);
       break;
     }
 #endif  // SEND_SAMSUNG_AC
@@ -1627,13 +1635,18 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
   return true;  // Success.
 }
 
+// Update the previous state to the current one.
+void IRac::markAsSent(void) {
+  _prev = next;
+}
+
 // Send an A/C message based soley on our internal state.
 //
 // Returns:
 //   boolean: True, if accepted/converted/attempted. False, if unsupported.
 bool IRac::sendAc(void) {
   bool success = this->sendAc(next, &_prev);
-  _prev = next;
+  if (success) this->markAsSent();
   return success;
 }
 
@@ -1799,7 +1812,8 @@ int16_t IRac::strToModel(const char *str, const int16_t def) {
     return panasonic_ac_remote_model_t::kPanasonicLke;
   } else if (!strcasecmp(str, "NKE") || !strcasecmp(str, "PANASONICNKE")) {
     return panasonic_ac_remote_model_t::kPanasonicNke;
-  } else if (!strcasecmp(str, "DKE") || !strcasecmp(str, "PANASONICDKE")) {
+  } else if (!strcasecmp(str, "DKE") || !strcasecmp(str, "PANASONICDKE") ||
+             !strcasecmp(str, "PKR") || !strcasecmp(str, "PANASONICPKR")) {
     return panasonic_ac_remote_model_t::kPanasonicDke;
   } else if (!strcasecmp(str, "JKE") || !strcasecmp(str, "PANASONICJKE")) {
     return panasonic_ac_remote_model_t::kPanasonicJke;

@@ -125,6 +125,8 @@ decode_type_t strToDecodeType(const char * const str) {
     return decode_type_t::DISH;
   else if (!strcasecmp(str, "ELECTRA_AC"))
     return decode_type_t::ELECTRA_AC;
+  else if (!strcasecmp(str, "EPSON"))
+    return decode_type_t::EPSON;
   else if (!strcasecmp(str, "FUJITSU_AC"))
     return decode_type_t::FUJITSU_AC;
   else if (!strcasecmp(str, "GICABLE"))
@@ -228,6 +230,8 @@ decode_type_t strToDecodeType(const char * const str) {
     return decode_type_t::SHERWOOD;
   else if (!strcasecmp(str, "SONY"))
     return decode_type_t::SONY;
+  else if (!strcasecmp(str, "SONY_38K"))
+    return decode_type_t::SONY_38K;
   else if (!strcasecmp(str, "TCL112AC"))
     return decode_type_t::TCL112AC;
   else if (!strcasecmp(str, "TECO"))
@@ -307,6 +311,9 @@ String typeToString(const decode_type_t protocol, const bool isRepeat) {
       break;
     case ELECTRA_AC:
       result = F("ELECTRA_AC");
+      break;
+    case EPSON:
+      result = F("EPSON");
       break;
     case FUJITSU_AC:
       result = F("FUJITSU_AC");
@@ -461,6 +468,9 @@ String typeToString(const decode_type_t protocol, const bool isRepeat) {
     case SONY:
       result = F("SONY");
       break;
+    case SONY_38K:
+      result = F("SONY_38K");
+      break;
     case TCL112AC:
       result = F("TCL112AC");
       break;
@@ -592,7 +602,7 @@ String resultToSourceCode(const decode_results * const results) {
   // Only display the value if the decode type doesn't have an A/C state.
   if (!hasACState(results->decode_type))
     output += ' ' + uint64ToString(results->value, 16);
-  output += F("\n\r");
+  output += F("\n");
 
   // Now dump "known" codes
   if (results->decode_type != UNKNOWN) {
@@ -608,7 +618,7 @@ String resultToSourceCode(const decode_results * const results) {
         output += uint64ToString(results->state[i], 16);
         if (i < nbytes - 1) output += kCommaSpaceStr;
       }
-      output += F("};\n\r");
+      output += F("};\n");
 #endif  // DECODE_AC
     } else {
       // Simple protocols
@@ -618,15 +628,15 @@ String resultToSourceCode(const decode_results * const results) {
       if (results->address > 0 || results->command > 0) {
         output += F("uint32_t address = 0x");
         output += uint64ToString(results->address, 16);
-        output += F(";\n\r");
+        output += F(";\n");
         output += F("uint32_t command = 0x");
         output += uint64ToString(results->command, 16);
-        output += F(";\n\r");
+        output += F(";\n");
       }
       // Most protocols have data
       output += F("uint64_t data = 0x");
       output += uint64ToString(results->value, 16);
-      output += F(";\n\r");
+      output += F(";\n");
     }
   }
   return output;
@@ -642,7 +652,7 @@ String resultToTimingInfo(const decode_results * const results) {
   value.reserve(6);  // Max value should be 2^17 = 131072
   output += F("Raw Timing[");
   output += uint64ToString(results->rawlen - 1, 10);
-  output += F("]:\n\r");
+  output += F("]:\n");
 
   for (uint16_t i = 1; i < results->rawlen; i++) {
     if (i % 2 == 0)
@@ -655,9 +665,9 @@ String resultToTimingInfo(const decode_results * const results) {
     output += value;
     if (i < results->rawlen - 1)
       output += kCommaSpaceStr;  // ',' not needed for last one
-    if (!(i % 8)) output += '\n\r';  // Newline every 8 entries.
+    if (!(i % 8)) output += '\n';  // Newline every 8 entries.
   }
-  output += '\n\r';
+  output += '\n';
   return output;
 }
 
@@ -690,7 +700,7 @@ String resultToHumanReadableBasic(const decode_results * const results) {
   output += kProtocolStr;
   output += F("  : ");
   output += typeToString(results->decode_type, results->repeat);
-  output += '\n\r';
+  output += '\n';
 
   // Show Code & length
   output += kCodeStr;
@@ -700,7 +710,7 @@ String resultToHumanReadableBasic(const decode_results * const results) {
   output += uint64ToString(results->bits);
   output += ' ';
   output += kBitsStr;
-  output +=  F(")\n\r");
+  output +=  F(")\n");
   return output;
 }
 

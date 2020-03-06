@@ -938,7 +938,7 @@ void mqtt_callback(const MQTT::Publish& pub) {
       TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_2, sizeof(SONY_RM_ED022_NUMERIC_2), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
     }
     if (s=="SONY_RM_ED022_NUMERIC_3"){
-      TransmitRawIRCommand(SONY_RM_ED022_POWER, sizeof(SONY_RM_ED022_POWER), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_3, sizeof(SONY_RM_ED022_NUMERIC_3), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
     }
     if (s=="SONY_RM_ED022_NUMERIC_4"){
       TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_4, sizeof(SONY_RM_ED022_NUMERIC_4), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
@@ -1022,7 +1022,7 @@ void mqtt_callback(const MQTT::Publish& pub) {
       TransmitRawIRCommand(SONY_RM_LP211_SOURCE_PHONO, sizeof(SONY_RM_LP211_SOURCE_PHONO), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
     }
     if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_MULTI_CHANEL"){
-      TransmitRawIRCommand(SONY_RM_LP211_POWER, sizeof(SONY_RM_LP211_POWER), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_MULTI_CHANEL, sizeof(SONY_RM_LP211_SOURCE_MULTI_CHANEL), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
     }
     if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_PREVIOUS_TRACK"){
       TransmitRawIRCommand(SONY_RM_LP211_PREVIOUS_TRACK, sizeof(SONY_RM_LP211_PREVIOUS_TRACK), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
@@ -1040,7 +1040,7 @@ void mqtt_callback(const MQTT::Publish& pub) {
       TransmitRawIRCommand(SONY_RM_LP211_PLAY, sizeof(SONY_RM_LP211_PLAY), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
     }
     if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_PAUSE"){
-      TransmitRawIRCommand(SONY_RM_LP211_POWER, sizeof(SONY_RM_LP211_POWER), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      TransmitRawIRCommand(SONY_RM_LP211_PAUSE, sizeof(SONY_RM_LP211_PAUSE), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
     }
     if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_STOP"){
       TransmitRawIRCommand(SONY_RM_LP211_STOP, sizeof(SONY_RM_LP211_STOP), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );

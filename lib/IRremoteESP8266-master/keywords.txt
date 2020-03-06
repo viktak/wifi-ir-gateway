@@ -84,6 +84,7 @@ _delayMicroseconds	KEYWORD2
 _getTime	KEYWORD2
 _getTimer	KEYWORD2
 _matchGeneric	KEYWORD2
+_sendSony	KEYWORD2
 _setMode	KEYWORD2
 _setTemp	KEYWORD2
 _setTime	KEYWORD2
@@ -132,6 +133,7 @@ convertSwingV	KEYWORD2
 coolix	KEYWORD2
 copyIrParams	KEYWORD2
 countBits	KEYWORD2
+crudeNoiseFilter	KEYWORD2
 daikin	KEYWORD2
 daikin128	KEYWORD2
 daikin152	KEYWORD2
@@ -155,6 +157,7 @@ decodeDaikin2	KEYWORD2
 decodeDaikin216	KEYWORD2
 decodeDenon	KEYWORD2
 decodeElectraAC	KEYWORD2
+decodeEpson	KEYWORD2
 decodeFujitsuAC	KEYWORD2
 decodeGICable	KEYWORD2
 decodeGoodweather	KEYWORD2
@@ -251,6 +254,7 @@ getCorrectedRawLength	KEYWORD2
 getCurrTime	KEYWORD2
 getCurrentDay	KEYWORD2
 getCurrentTime	KEYWORD2
+getDisplay	KEYWORD2
 getEcono	KEYWORD2
 getEye	KEYWORD2
 getEyeAuto	KEYWORD2
@@ -354,6 +358,7 @@ ledOff	KEYWORD2
 ledOn	KEYWORD2
 lg	KEYWORD2
 mark	KEYWORD2
+markAsSent	KEYWORD2
 match	KEYWORD2
 matchAtLeast	KEYWORD2
 matchBytes	KEYWORD2
@@ -405,6 +410,7 @@ sendDaikin216	KEYWORD2
 sendData	KEYWORD2
 sendDenon	KEYWORD2
 sendElectraAC	KEYWORD2
+sendEpson	KEYWORD2
 sendExtended	KEYWORD2
 sendFujitsuAC	KEYWORD2
 sendGC	KEYWORD2
@@ -459,6 +465,7 @@ sendSharpAc	KEYWORD2
 sendSharpRaw	KEYWORD2
 sendSherwood	KEYWORD2
 sendSony	KEYWORD2
+sendSony38	KEYWORD2
 sendTcl112Ac	KEYWORD2
 sendTeco	KEYWORD2
 sendToshibaAC	KEYWORD2
@@ -482,6 +489,7 @@ setCommand	KEYWORD2
 setCurrTime	KEYWORD2
 setCurrentDay	KEYWORD2
 setCurrentTime	KEYWORD2
+setDisplay	KEYWORD2
 setEcono	KEYWORD2
 setEye	KEYWORD2
 setEyeAuto	KEYWORD2
@@ -664,6 +672,7 @@ DECODE_DAIKIN216	LITERAL1
 DECODE_DENON	LITERAL1
 DECODE_DISH	LITERAL1
 DECODE_ELECTRA_AC	LITERAL1
+DECODE_EPSON	LITERAL1
 DECODE_FUJITSU_AC	LITERAL1
 DECODE_GICABLE	LITERAL1
 DECODE_GLOBALCACHE	LITERAL1
@@ -726,6 +735,8 @@ DG11J191	LITERAL1
 DISH	LITERAL1
 DISH_BITS	LITERAL1
 ELECTRA_AC	LITERAL1
+ENABLE_NOISE_FILTER_OPTION	LITERAL1
+EPSON	LITERAL1
 FUJITSU_AC	LITERAL1
 FUJITSU_AC_BITS	LITERAL1
 FUJITSU_AC_CMD_STAY_ON	LITERAL1
@@ -962,6 +973,7 @@ SEND_DAIKIN216	LITERAL1
 SEND_DENON	LITERAL1
 SEND_DISH	LITERAL1
 SEND_ELECTRA_AC	LITERAL1
+SEND_EPSON	LITERAL1
 SEND_FUJITSU_AC	LITERAL1
 SEND_GICABLE	LITERAL1
 SEND_GLOBALCACHE	LITERAL1
@@ -1024,6 +1036,7 @@ SONY	LITERAL1
 SONY_12_BITS	LITERAL1
 SONY_15_BITS	LITERAL1
 SONY_20_BITS	LITERAL1
+SONY_38K	LITERAL1
 TCL112AC	LITERAL1
 TECO	LITERAL1
 TIMEOUT_MS	LITERAL1
@@ -1631,6 +1644,7 @@ kEconoStr	LITERAL1
 kElectraAcAuto	LITERAL1
 kElectraAcBitMark	LITERAL1
 kElectraAcBits	LITERAL1
+kElectraAcCleanOffset	LITERAL1
 kElectraAcCool	LITERAL1
 kElectraAcDry	LITERAL1
 kElectraAcFan	LITERAL1
@@ -1643,6 +1657,9 @@ kElectraAcFanSize	LITERAL1
 kElectraAcHdrMark	LITERAL1
 kElectraAcHdrSpace	LITERAL1
 kElectraAcHeat	LITERAL1
+kElectraAcLightToggleMask	LITERAL1
+kElectraAcLightToggleOff	LITERAL1
+kElectraAcLightToggleOn	LITERAL1
 kElectraAcMaxTemp	LITERAL1
 kElectraAcMessageGap	LITERAL1
 kElectraAcMinRepeat	LITERAL1
@@ -1659,7 +1676,10 @@ kElectraAcSwingVOffset	LITERAL1
 kElectraAcTempDelta	LITERAL1
 kElectraAcTempOffset	LITERAL1
 kElectraAcTempSize	LITERAL1
+kElectraAcTurboOffset	LITERAL1
 kElectraAcZeroSpace	LITERAL1
+kEpsonBits	LITERAL1
+kEpsonMinRepeat	LITERAL1
 kEyeAutoStr	LITERAL1
 kEyeStr	LITERAL1
 kFalseStr	LITERAL1
@@ -2606,6 +2626,8 @@ kPanasonicAcFanMed	LITERAL1
 kPanasonicAcFanMin	LITERAL1
 kPanasonicAcFanModeTemp	LITERAL1
 kPanasonicAcHeat	LITERAL1
+kPanasonicAcIonFilterByte	LITERAL1
+kPanasonicAcIonFilterOffset	LITERAL1
 kPanasonicAcMaxTemp	LITERAL1
 kPanasonicAcMessageGap	LITERAL1
 kPanasonicAcMinTemp	LITERAL1
@@ -2758,6 +2780,7 @@ kSamsungAcClean10Offset	LITERAL1
 kSamsungAcClean11Offset	LITERAL1
 kSamsungAcCool	LITERAL1
 kSamsungAcDefaultRepeat	LITERAL1
+kSamsungAcDisplayOffset	LITERAL1
 kSamsungAcDry	LITERAL1
 kSamsungAcExtendedBits	LITERAL1
 kSamsungAcExtendedStateLength	LITERAL1
@@ -2773,6 +2796,7 @@ kSamsungAcFanTurbo	LITERAL1
 kSamsungAcHdrMark	LITERAL1
 kSamsungAcHdrSpace	LITERAL1
 kSamsungAcHeat	LITERAL1
+kSamsungAcIonOffset	LITERAL1
 kSamsungAcMaxTemp	LITERAL1
 kSamsungAcMinTemp	LITERAL1
 kSamsungAcModeOffset	LITERAL1
@@ -2896,6 +2920,7 @@ kSlowStr	LITERAL1
 kSony12Bits	LITERAL1
 kSony15Bits	LITERAL1
 kSony20Bits	LITERAL1
+kSonyAltFreq	LITERAL1
 kSonyHdrMark	LITERAL1
 kSonyHdrMarkTicks	LITERAL1
 kSonyMinBits	LITERAL1
@@ -2908,6 +2933,7 @@ kSonyRptLength	LITERAL1
 kSonyRptLengthTicks	LITERAL1
 kSonySpace	LITERAL1
 kSonySpaceTicks	LITERAL1
+kSonyStdFreq	LITERAL1
 kSonyTick	LITERAL1
 kSonyZeroMark	LITERAL1
 kSonyZeroMarkTicks	LITERAL1

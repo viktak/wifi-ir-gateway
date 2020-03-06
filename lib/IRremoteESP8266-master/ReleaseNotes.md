@@ -1,5 +1,42 @@
 # Release Notes
 
+## _v2.7.4 (20200226)_
+
+**[Bug Fixes]**
+- IRMQTTServer: Fix bug when receiving an IR A/C message and not re-transmitting it. (#1035, #1038)
+- Coolix: `setRaw()` doesn't update power state. (#1040, #1041)
+
+**[Features]**
+- Electra: Add improved feature support. (#1033, #1051)
+- Add support for Epson protocol. (#1034, #1050)
+- Add options to `decode()` to aid detection. Improve NEC detection. (#1042, #1046)
+- SamsungAc: Add support for Light & Ion (VirusDoctor). (#1045, #1048, #1049)
+- Add Italian (it-IT) locale/language support. (#1047) (kudos @egueli)
+- gc_decode: Add repeat support for pronto codes. (#1034, #1043)
+
+**[Misc]**
+- Update supported SamsungAc devices (#1045)
+- Coolix: Subtle protocol timing adjustments (#1036, #1037)
+- Add supported Electra device model info (#1033)
+
+
+## _v2.7.3 (20200130)_
+
+**[Features]**
+- Allow protocols to be enabled or disabled with compiler flags. (#1013, #1012)
+- Panasonic AC: Add Ion Filter support for DKE models. (#1025, #1024)
+- Add support for sending Sony at 38Khz (#1029, #1018, #1019)
+- auto_analyse_raw_data.py: Handle analysing messages with no headers. (#1017)
+
+**[Misc]**
+- Fix Coolix unit test errors when using Apple c++ compiler. (#1030, #1028)
+- Fix Apple clang c++ compiler error in unit tests. (#1027, #1026)
+- Improve/fix scraping of supported devices (#1022)
+- Panasonic PKR series A/C uses DKE protocol. (#1020, #1021)
+- Update NEC supported devices. (#1018)
+- Add note to avoid GPIO16 on the ESP8266 for receiving. (#1016, #1015)
+
+
 ## _v2.7.2 (20200106)_
 
 **[Bug Fixes]**
