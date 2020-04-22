@@ -19,13 +19,13 @@
 
 #include <PubSubClient.h>
 #include <EEPROM.h>
-#include <IRremoteESP8266.h>
+
 #include <IRrecv.h>
 #include <IRutils.h>
 #include <IRac.h>
 #include <IRtext.h>
 #include <IRsend.h>
-
+#include <IRremoteESP8266.h>
 
 #include <ArduinoJson.h>
 #include <TimeLib.h>
