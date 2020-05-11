@@ -28,6 +28,7 @@ config appConfig;
 char timeout = 30;
 bool isAccessPoint = false;
 bool isAccessPointCreated = false;
+TimeChangeRule *tcr;        // Pointer to the time change rule
 
 bool ntpInitialized = false;
 
@@ -51,7 +52,7 @@ void LogEvent(int Category, int ID, String Title, String Data){
 
     Serial.println(msg);
 
-      PSclient.publish(MQTT::Publish(MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + String(ESP.getChipId()) + "/log/", msg ).set_qos(0));
+    PSclient.publish(MQTT::Publish(MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/log", msg ).set_qos(0));
   }
 }
 
@@ -60,7 +61,7 @@ void heartbeatTimerCallback(void *pArg) {
 }
 
 bool loadSettings(config& data) {
-  fs::File configFile = SPIFFS.open("/config.json", "r");
+  File configFile = LittleFS.open("/config.json", "r");
   if (!configFile) {
     Serial.println("Failed to open config file");
     LogEvent(EVENTCATEGORIES::System, 1, "FS failure", "Failed to open config file.");
@@ -103,7 +104,7 @@ bool loadSettings(config& data) {
   }
   else
   {
-    strcpy(appConfig.ssid, "ssid");
+    strcpy(appConfig.ssid, defaultSSID);
   }
   
   if (doc["password"]){
@@ -185,7 +186,7 @@ bool saveSettings() {
   Serial.println();
   #endif
 
-  fs::File configFile = SPIFFS.open("/config.json", "w");
+  File configFile = LittleFS.open("/config.json", "w");
   if (!configFile) {
     Serial.println("Failed to open config file for writing");
     LogEvent(System, 4, "FS failure", "Failed to open config file for writing.");
@@ -342,12 +343,14 @@ void handleLogin(){
     LogEvent(EVENTCATEGORIES::Login, 2, "Failure", "User name: " + server.arg("username") + " - Password: " + server.arg("password"));
   }
 
-  fs::File f = SPIFFS.open("/pageheader.html", "r");
+  File f = LittleFS.open("/pageheader.html", "r");
   String headerString;
   if (f.available()) headerString = f.readString();
   f.close();
 
-  f = SPIFFS.open("/login.html", "r");
+  time_t localTime = myTZ.toLocal(now(), &tcr);
+
+  f = LittleFS.open("/login.html", "r");
 
   String s, htmlString;
 
@@ -355,12 +358,14 @@ void handleLogin(){
     s = f.readStringUntil('\n');
 
     if (s.indexOf("%pageheader%")>-1) s.replace("%pageheader%", headerString);
+    if (s.indexOf("%year%")>-1) s.replace("%year%", (String)year(localTime));
     if (s.indexOf("%alert%")>-1) s.replace("%alert%", msg);
 
     htmlString+=s;
   }
   f.close();
   server.send(200, "text/html", htmlString);
+  LogEvent(PageHandler, 2, "Page served", "/");
 }
 
 void handleRoot() {
@@ -372,12 +377,14 @@ void handleRoot() {
     return;
   }
 
-  fs::File f = SPIFFS.open("/pageheader.html", "r");
+  File f = LittleFS.open("/pageheader.html", "r");
   String headerString;
   if (f.available()) headerString = f.readString();
   f.close();
 
-  f = SPIFFS.open("/index.html", "r");
+    time_t localTime = myTZ.toLocal(now(), &tcr);
+
+  f = LittleFS.open("/index.html", "r");
 
   String FirmwareVersionString = String(FIRMWARE_VERSION) + " @ " + String(__TIME__) + " - " + String(__DATE__);
 
@@ -387,6 +394,7 @@ void handleRoot() {
     s = f.readStringUntil('\n');
 
     if (s.indexOf("%pageheader%")>-1) s.replace("%pageheader%", headerString);
+    if (s.indexOf("%year%")>-1) s.replace("%year%", (String)year(localTime));
     if (s.indexOf("%espid%")>-1) s.replace("%espid%", (String)ESP.getChipId());
     if (s.indexOf("%hardwareid%")>-1) s.replace("%hardwareid%", HARDWARE_ID);
     if (s.indexOf("%hardwareversion%")>-1) s.replace("%hardwareversion%", HARDWARE_VERSION);
@@ -409,17 +417,16 @@ void handleStatus() {
      return;
   }
 
-  fs::File f = SPIFFS.open("/pageheader.html", "r");
+  File f = LittleFS.open("/pageheader.html", "r");
   String headerString;
   if (f.available()) headerString = f.readString();
   f.close();
 
-  TimeChangeRule *tcr;        // Pointer to the time change rule
   time_t localTime = myTZ.toLocal(now(), &tcr);
 
   String s;
 
-  f = SPIFFS.open("/status.html", "r");
+  f = LittleFS.open("/status.html", "r");
 
   String htmlString, ds18b20list;
 
@@ -428,6 +435,7 @@ void handleStatus() {
 
     //  System information
     if (s.indexOf("%pageheader%")>-1) s.replace("%pageheader%", headerString);
+    if (s.indexOf("%year%")>-1) s.replace("%year%", (String)year(localTime));
     if (s.indexOf("%chipid%")>-1) s.replace("%chipid%", (String)ESP.getChipId());
     if (s.indexOf("%uptime%")>-1) s.replace("%uptime%", TimeIntervalToString(millis()/1000));
     if (s.indexOf("%currenttime%")>-1) s.replace("%currenttime%", DateTimeToString(localTime));
@@ -437,6 +445,7 @@ void handleStatus() {
     if (s.indexOf("%freeheapsize%")>-1) s.replace("%freeheapsize%",String(ESP.getFreeHeap()));
     if (s.indexOf("%freesketchspace%")>-1) s.replace("%freesketchspace%",String(ESP.getFreeSketchSpace()));
     if (s.indexOf("%friendlyname%")>-1) s.replace("%friendlyname%",appConfig.friendlyName);
+    if (s.indexOf("%mqtt-topic%")>-1) s.replace("%mqtt-topic%",appConfig.mqttTopic);
 
     //  Network settings
     switch (WiFi.getMode()) {
@@ -466,6 +475,7 @@ void handleStatus() {
     f.close();
   server.send(200, "text/html", htmlString);
   LogEvent(EVENTCATEGORIES::PageHandler, 2, "Page served", "status.html");
+
 }
 
 void handleGeneralSettings() {
@@ -527,14 +537,18 @@ void handleGeneralSettings() {
       PSclient.disconnect();
 
     saveSettings();
+    ESP.reset();
+
   }
 
-  fs::File f = SPIFFS.open("/pageheader.html", "r");
+  File f = LittleFS.open("/pageheader.html", "r");
   String headerString;
   if (f.available()) headerString = f.readString();
   f.close();
 
-  f = SPIFFS.open("/generalsettings.html", "r");
+  time_t localTime = myTZ.toLocal(now(), &tcr);
+
+  f = LittleFS.open("/generalsettings.html", "r");
 
   String s, htmlString, timezoneslist;
 
@@ -564,6 +578,7 @@ void handleGeneralSettings() {
     s = f.readStringUntil('\n');
 
     if (s.indexOf("%pageheader%")>-1) s.replace("%pageheader%", headerString);
+    if (s.indexOf("%year%")>-1) s.replace("%year%", (String)year(localTime));
     if (s.indexOf("%mqtt-servername%")>-1) s.replace("%mqtt-servername%", appConfig.mqttServer);
     if (s.indexOf("%mqtt-port%")>-1) s.replace("%mqtt-port%", String(appConfig.mqttPort));
     if (s.indexOf("%mqtt-topic%")>-1) s.replace("%mqtt-topic%", appConfig.mqttTopic);
@@ -601,12 +616,14 @@ void handleNetworkSettings() {
     }
   }
 
-  fs::File f = SPIFFS.open("/pageheader.html", "r");
+  File f = LittleFS.open("/pageheader.html", "r");
   String headerString;
   if (f.available()) headerString = f.readString();
   f.close();
 
-  f = SPIFFS.open("/networksettings.html", "r");
+  time_t localTime = myTZ.toLocal(now(), &tcr);
+
+  f = LittleFS.open("/networksettings.html", "r");
   String s, htmlString, wifiList;
 
   byte numberOfNetworks = WiFi.scanNetworks();
@@ -621,6 +638,7 @@ void handleNetworkSettings() {
     s = f.readStringUntil('\n');
 
     if (s.indexOf("%pageheader%")>-1) s.replace("%pageheader%", headerString);
+    if (s.indexOf("%year%")>-1) s.replace("%year%", (String)year(localTime));
     if (s.indexOf("%wifilist%")>-1) s.replace("%wifilist%", wifiList);
       htmlString+=s;
     }
@@ -653,12 +671,14 @@ void handleTools() {
     }
   }
 
-  fs::File f = SPIFFS.open("/pageheader.html", "r");
+  File f = LittleFS.open("/pageheader.html", "r");
   String headerString;
   if (f.available()) headerString = f.readString();
   f.close();
 
-  f = SPIFFS.open("/tools.html", "r");
+  time_t localTime = myTZ.toLocal(now(), &tcr);
+
+  f = LittleFS.open("/tools.html", "r");
 
   String s, htmlString;
 
@@ -666,6 +686,7 @@ void handleTools() {
     s = f.readStringUntil('\n');
 
     if (s.indexOf("%pageheader%")>-1) s.replace("%pageheader%", headerString);
+    if (s.indexOf("%year%")>-1) s.replace("%year%", (String)year(localTime));
 
       htmlString+=s;
     }
@@ -699,9 +720,9 @@ void handleNotFound(){
 }
 
 void SendHeartbeat(){
+
   if (PSclient.connected()){
 
-    TimeChangeRule *tcr;        // Pointer to the time change rule
     time_t localTime = myTZ.toLocal(now(), &tcr);
 
     const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(6) + 180;
@@ -1090,7 +1111,7 @@ void setup() {
   pinMode(IR_SEND_GPIO, OUTPUT);
   
   //  File system
-  if (!SPIFFS.begin()){
+  if (!LittleFS.begin()){
     Serial.println("Error: Failed to initialize the filesystem!");
   }
 
@@ -1169,7 +1190,7 @@ void setup() {
   irrecv.setUnknownThreshold(kMinUnknownSize);
   #endif  // DECODE_HASH
   irsend.begin();
-  irrecv.enableIRIn();
+  //irrecv.enableIRIn();
 
   // Set the initial connection state
   connectionState = STATE_CHECK_WIFI_CONNECTION;
