@@ -4,7 +4,7 @@
 #define HARDWARE_ID "WiFi-IR Gateway"
 #define HARDWARE_VERSION "1.0"
 #define SOFTWARE_ID "WiFi-IR Gateway "
-#define FIRMWARE_VERSION "1.0"
+#define FIRMWARE_VERSION "1.1"
 
 #define JSON_SETTINGS_SIZE (JSON_OBJECT_SIZE(9) + 200)
 #define JSON_MQTT_COMMAND_SIZE 300

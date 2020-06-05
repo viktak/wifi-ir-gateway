@@ -20,6 +20,7 @@ PubSubClient PSclient(wclient);
 
 //  Timers and their flags
 os_timer_t heartbeatTimer;
+os_timer_t accessPointTimer;
 
 bool needsHeartbeat = false;
 
@@ -53,6 +54,10 @@ void LogEvent(int Category, int ID, String Title, String Data){
 
     PSclient.publish(MQTT::Publish(MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/log", msg ).set_qos(0));
   }
+}
+
+void accessPointTimerCallback(void *pArg) {
+  ESP.reset();
 }
 
 void heartbeatTimerCallback(void *pArg) {
@@ -208,13 +213,14 @@ void defaultSettings(){
   strcpy(appConfig.mqttServer, "test.mosquitto.org");
   #endif
 
-  appConfig.mqttPort = 1883;
+  appConfig.mqttPort = DEFAULT_MQTT_PORT;
   strcpy(appConfig.mqttTopic, DEFAULT_MQTT_TOPIC);
 
   appConfig.timeZone = 2;
 
   strcpy(appConfig.friendlyName, NODE_DEFAULT_FRIENDLY_NAME);
   appConfig.heartbeatInterval = DEFAULT_HEARTBEAT_INTERVAL;
+
 
   if (!saveSettings()) {
     Serial.println("Failed to save config");
@@ -832,6 +838,7 @@ void mqtt_callback(const MQTT::Publish& pub) {
   Serial.println();
   #endif
 
+
   //  reset
   if (doc.containsKey("reset")){
     LogEvent(EVENTCATEGORIES::MqttMsg, 1, "Reset", "");
@@ -1094,9 +1101,20 @@ void setup() {
   Serial.println("Software version: " + FirmwareVersionString);
   Serial.println();
 
+  //  File system
+  if (!LittleFS.begin()){
+    Serial.println("Error: Failed to initialize the filesystem!");
+  }
+
+  if (!loadSettings(appConfig)) {
+    Serial.println("Failed to load config, creating default settings...");
+    defaultSettings();
+  } else {
+    Serial.println("Config loaded.");
+  }
+
   sprintf(defaultSSID, "%s-%u", appConfig.mqttTopic, ESP.getChipId());
   WiFi.hostname(defaultSSID);
-
 
   //  GPIOs
 
@@ -1109,17 +1127,6 @@ void setup() {
 
   pinMode(IR_SEND_GPIO, OUTPUT);
   
-  //  File system
-  if (!LittleFS.begin()){
-    Serial.println("Error: Failed to initialize the filesystem!");
-  }
-
-  if (!loadSettings(appConfig)) {
-    Serial.println("Failed to load config, creating default settings...");
-    defaultSettings();
-  } else {
-    Serial.println("Config loaded.");
-  }
 
   //  OTA
   ArduinoOTA.onStart([]() {
@@ -1193,6 +1200,7 @@ void setup() {
 
   // Set the initial connection state
   connectionState = STATE_CHECK_WIFI_CONNECTION;
+
 }
 
 void loop(){
@@ -1222,6 +1230,14 @@ void loop(){
 
       Serial.print("Access point address:\t");
       Serial.println(myIP);
+
+      Serial.println();
+      Serial.println("Note: The device will reset in 5 minutes.");
+
+
+      os_timer_setfn(&accessPointTimer, accessPointTimerCallback, NULL);
+      os_timer_arm(&accessPointTimer, ACCESS_POINT_TIMEOUT, true);
+      os_timer_disarm(&heartbeatTimer);
     }
     server.handleClient();
   }
