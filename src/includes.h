@@ -1,3 +1,6 @@
+#ifndef INCLUDES_H
+#define INCLUDES_H
+
 #include "defines.h"
 #include "../../_common/defines.h"
 
@@ -39,3 +42,5 @@
 #include "ir-sony-rm-ed022-raw.h"
 #include "ir-sony-rm-lp211-raw.h"
 #include "ir-toyotomi-car-27paun-raw.h"
+
+#endif
