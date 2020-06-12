@@ -7,6 +7,8 @@
 #include "enums.h"
 #include "../../_common/enums.h"
 
+#include "../../_common/variables.cpp"
+
 #include <cstdlib>
 #include <string>
 

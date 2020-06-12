@@ -1,16 +1,6 @@
 #define __debugSettings
 #include "includes.h"
 
-IRrecv irrecv(IR_RECEIVE_GPIO, kCaptureBufferSize, kTimeout, false);
-IRsend irsend(IR_SEND_GPIO);
-
-decode_results results;
-
-// Current connection state
-enum CONNECTION_STATE connectionState;
-
-char defaultSSID[48];
-
 //  Web server
 ESP8266WebServer server(80);
 
@@ -29,8 +19,12 @@ config appConfig;
 bool isAccessPoint = false;
 bool isAccessPointCreated = false;
 TimeChangeRule *tcr;        // Pointer to the time change rule
-
+decode_results results;
 bool ntpInitialized = false;
+enum CONNECTION_STATE connectionState;
+
+IRrecv irrecv(IR_RECEIVE_GPIO, kCaptureBufferSize, kTimeout, false);
+IRsend irsend(IR_SEND_GPIO);
 
 WiFiUDP Udp;
 
@@ -52,8 +46,25 @@ void LogEvent(int Category, int ID, String Title, String Data){
 
     Serial.println(msg);
 
-    PSclient.publish(MQTT::Publish(MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/log", msg ).set_qos(0));
+    PSclient.publish((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/log").c_str(), msg.c_str(), false);
   }
+}
+
+void SetRandomSeed(){
+    uint32_t seed;
+
+    // random works best with a seed that can use 31 bits
+    // analogRead on a unconnected pin tends toward less than four bits
+    seed = analogRead(0);
+    delay(1);
+
+    for (int shifts = 3; shifts < 31; shifts += 3)
+    {
+        seed ^= analogRead(0) << shifts;
+        delay(1);
+    }
+
+    randomSeed(seed);
 }
 
 void accessPointTimerCallback(void *pArg) {
@@ -618,11 +629,14 @@ void handleNetworkSettings() {
       connectionState = STATE_CHECK_WIFI_CONNECTION;
       WiFi.disconnect(false);
 
+      ESP.reset();
     }
   }
 
   File f = LittleFS.open("/pageheader.html", "r");
+
   String headerString;
+
   if (f.available()) headerString = f.readString();
   f.close();
 
@@ -753,7 +767,7 @@ void SendHeartbeat(){
 
     serializeJson(doc, myJsonString);
 
-    PSclient.publish(MQTT::Publish(MQTT_CUSTOMER + String("/") + MQTT_PROJECT + "/" + appConfig.mqttTopic + "/HEARTBEAT", myJsonString ).set_qos(0));
+    PSclient.publish((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + "/" + appConfig.mqttTopic + "/HEARTBEAT").c_str(), myJsonString.c_str(), 0);
   }
 
   needsHeartbeat = false;
@@ -778,7 +792,7 @@ void SendReceivedIRCode(String protocol, String data){
 
     serializeJson(doc, myJsonString);
 
-    PSclient.publish(MQTT::Publish(MQTT_CUSTOMER + String("/") + MQTT_PROJECT + "/" + appConfig.mqttTopic + "/RESULT", myJsonString ).set_qos(0));
+    PSclient.publish((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + "/" + appConfig.mqttTopic + "/RESULT").c_str(), myJsonString.c_str(), 0 );
   }
 }
 
@@ -807,21 +821,19 @@ or
 
 Order of parameters is ignored. Whitespaces/new line characters are ignored.
 */
-void mqtt_callback(const MQTT::Publish& pub) {
-
-  #ifdef __debugSettings
+void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 
   Serial.print("Topic:\t\t");
-  Serial.println(pub.topic());
+  Serial.println(topic);
 
   Serial.print("Payload:\t");
-  if (pub.payload_string()!=NULL)
-    Serial.println(pub.payload_string());
-
-  #endif
+  for (unsigned int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
 
   StaticJsonDocument<JSON_MQTT_COMMAND_SIZE> doc;
-  DeserializationError error = deserializeJson(doc, pub.payload_string());
+  DeserializationError error = deserializeJson(doc, payload);
 
   if (error) {
     Serial.println("Failed to parse incoming string.");
@@ -832,258 +844,262 @@ void mqtt_callback(const MQTT::Publish& pub) {
     }
     return;
   }
+  else{
+    //  It IS a JSON string
 
-  #ifdef __debugSettings
-  serializeJsonPretty(doc,Serial);
-  Serial.println();
-  #endif
+    #ifdef __debugSettings
+    serializeJsonPretty(doc,Serial);
+    Serial.println();
+    #endif
 
+    if (doc.containsKey("TOYOTOMI_CAR_27PAUN")){
+      String s = doc["TOYOTOMI_CAR_27PAUN"];
+      s.toUpperCase();
+      if (s=="ON"){
+        TransmitRawIRCommand(TOYOTOMI_CAR_27PAUN_ON, sizeof(TOYOTOMI_CAR_27PAUN_ON), "TOYOTOMI_CAR_27PAUN", s, 38 );
+      }else{
+        TransmitRawIRCommand(TOYOTOMI_CAR_27PAUN_OFF, sizeof(TOYOTOMI_CAR_27PAUN_OFF), "TOYOTOMI_CAR_27PAUN", s, 38 );
+      }
+    }
 
-  //  reset
-  if (doc.containsKey("reset")){
-    LogEvent(EVENTCATEGORIES::MqttMsg, 1, "Reset", "");
-    defaultSettings();
-    ESP.reset();
+    if (doc.containsKey("IR_ELECTRA_ONOFF")){
+      if (doc["IR_ELECTRA_ONOFF"]==1){
+        TransmitRawIRCommand(IR_ELECTRA_ONOFF, sizeof(IR_ELECTRA_ONOFF), "IR_ELECTRA_ONOFF", doc["IR_ELECTRA_ONOFF"], 38 );
+      }
+    } 
+
+    //  SONY_RM_ED022
+    if (doc.containsKey("SONY_RM_ED022")) {
+      String s = doc["SONY_RM_ED022"];
+      s.toUpperCase();
+      if (s=="SONY_RM_ED022_POWER"){
+        TransmitRawIRCommand(SONY_RM_ED022_POWER, sizeof(SONY_RM_ED022_POWER), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_INPUT"){
+        TransmitRawIRCommand(SONY_RM_ED022_INPUT, sizeof(SONY_RM_ED022_INPUT), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_THEATRE"){
+        TransmitRawIRCommand(SONY_RM_ED022_THEATRE, sizeof(SONY_RM_ED022_THEATRE), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_SKIP_BACK"){
+        TransmitRawIRCommand(SONY_RM_ED022_SKIP_BACK, sizeof(SONY_RM_ED022_SKIP_BACK), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_PLAY"){
+        TransmitRawIRCommand(SONY_RM_ED022_PLAY, sizeof(SONY_RM_ED022_PLAY), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_SKIP_FORWARD"){
+        TransmitRawIRCommand(SONY_RM_ED022_SKIP_FORWARD, sizeof(SONY_RM_ED022_SKIP_FORWARD), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_SYNC_MENU"){
+        TransmitRawIRCommand(SONY_RM_ED022_SYNC_MENU, sizeof(SONY_RM_ED022_SYNC_MENU), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_PREVIOUS_TRACK"){
+        TransmitRawIRCommand(SONY_RM_ED022_PREVIOUS_TRACK, sizeof(SONY_RM_ED022_PREVIOUS_TRACK), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_STOP"){
+        TransmitRawIRCommand(SONY_RM_ED022_STOP, sizeof(SONY_RM_ED022_STOP), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NEXT_TRACK"){
+        TransmitRawIRCommand(SONY_RM_ED022_NEXT_TRACK, sizeof(SONY_RM_ED022_NEXT_TRACK), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_ARROW_UP"){
+        TransmitRawIRCommand(SONY_RM_ED022_ARROW_UP, sizeof(SONY_RM_ED022_ARROW_UP), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_ARROW_DOWN"){
+        TransmitRawIRCommand(SONY_RM_ED022_ARROW_DOWN, sizeof(SONY_RM_ED022_ARROW_DOWN), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_ARROW_LEFT"){
+        TransmitRawIRCommand(SONY_RM_ED022_ARROW_LEFT, sizeof(SONY_RM_ED022_ARROW_LEFT), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_ARROW_RIGHT"){
+        TransmitRawIRCommand(SONY_RM_ED022_ARROW_RIGHT, sizeof(SONY_RM_ED022_ARROW_RIGHT), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_ENTER"){
+        TransmitRawIRCommand(SONY_RM_ED022_ENTER, sizeof(SONY_RM_ED022_ENTER), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_I_MANUAL"){
+        TransmitRawIRCommand(SONY_RM_ED022_I_MANUAL, sizeof(SONY_RM_ED022_I_MANUAL), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_SCENE"){
+        TransmitRawIRCommand(SONY_RM_ED022_SCENE, sizeof(SONY_RM_ED022_SCENE), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_ASPECT_RATIO"){
+        TransmitRawIRCommand(SONY_RM_ED022_ASPECT_RATIO, sizeof(SONY_RM_ED022_ASPECT_RATIO), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_DIGITAL_ANALOG"){
+        TransmitRawIRCommand(SONY_RM_ED022_DIGITAL_ANALOG, sizeof(SONY_RM_ED022_DIGITAL_ANALOG), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_FAVOURITES"){
+        TransmitRawIRCommand(SONY_RM_ED022_FAVOURITES, sizeof(SONY_RM_ED022_FAVOURITES), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_GUIDE"){
+        TransmitRawIRCommand(SONY_RM_ED022_GUIDE, sizeof(SONY_RM_ED022_GUIDE), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_INFO"){
+        TransmitRawIRCommand(SONY_RM_ED022_INFO, sizeof(SONY_RM_ED022_INFO), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_RETURN"){
+        TransmitRawIRCommand(SONY_RM_ED022_RETURN, sizeof(SONY_RM_ED022_RETURN), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_OPTIONS"){
+        TransmitRawIRCommand(SONY_RM_ED022_OPTIONS, sizeof(SONY_RM_ED022_OPTIONS), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_HOME"){
+        TransmitRawIRCommand(SONY_RM_ED022_HOME, sizeof(SONY_RM_ED022_HOME), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_RED"){
+        TransmitRawIRCommand(SONY_RM_ED022_RED, sizeof(SONY_RM_ED022_RED), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_GREEN"){
+        TransmitRawIRCommand(SONY_RM_ED022_GREEN, sizeof(SONY_RM_ED022_GREEN), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_YELLOW"){
+        TransmitRawIRCommand(SONY_RM_ED022_YELLOW, sizeof(SONY_RM_ED022_YELLOW), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_BLUE"){
+        TransmitRawIRCommand(SONY_RM_ED022_BLUE, sizeof(SONY_RM_ED022_BLUE), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NUMERIC_1"){
+        TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_1, sizeof(SONY_RM_ED022_NUMERIC_1), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NUMERIC_2"){
+        TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_2, sizeof(SONY_RM_ED022_NUMERIC_2), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NUMERIC_3"){
+        TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_3, sizeof(SONY_RM_ED022_NUMERIC_3), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NUMERIC_4"){
+        TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_4, sizeof(SONY_RM_ED022_NUMERIC_4), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NUMERIC_5"){
+        TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_5, sizeof(SONY_RM_ED022_NUMERIC_5), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NUMERIC_6"){
+        TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_6, sizeof(SONY_RM_ED022_NUMERIC_6), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NUMERIC_7"){
+        TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_7, sizeof(SONY_RM_ED022_NUMERIC_7), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NUMERIC_8"){
+        TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_8, sizeof(SONY_RM_ED022_NUMERIC_8), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NUMERIC_9"){
+        TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_9, sizeof(SONY_RM_ED022_NUMERIC_9), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_NUMERIC_0"){
+        TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_0, sizeof(SONY_RM_ED022_NUMERIC_0), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_TELETEXT"){
+        TransmitRawIRCommand(SONY_RM_ED022_TELETEXT, sizeof(SONY_RM_ED022_TELETEXT), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_TELETEXT2"){
+        TransmitRawIRCommand(SONY_RM_ED022_TELETEXT2, sizeof(SONY_RM_ED022_TELETEXT2), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_MUTE"){
+        TransmitRawIRCommand(SONY_RM_ED022_MUTE, sizeof(SONY_RM_ED022_MUTE), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_VOLUME_UP"){
+        TransmitRawIRCommand(SONY_RM_ED022_VOLUME_UP, sizeof(SONY_RM_ED022_VOLUME_UP), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_VOLUME_DOWN"){
+        TransmitRawIRCommand(SONY_RM_ED022_VOLUME_DOWN, sizeof(SONY_RM_ED022_VOLUME_DOWN), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_PROGRAM_UP"){
+        TransmitRawIRCommand(SONY_RM_ED022_PROGRAM_UP, sizeof(SONY_RM_ED022_PROGRAM_UP), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_PROGRAM_DOWN"){
+        TransmitRawIRCommand(SONY_RM_ED022_PROGRAM_DOWN, sizeof(SONY_RM_ED022_PROGRAM_DOWN), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+      if (s=="SONY_RM_ED022_AUDIO"){
+        TransmitRawIRCommand(SONY_RM_ED022_AUDIO, sizeof(SONY_RM_ED022_AUDIO), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
+      }
+    }
+    //  SONY_RM_LP211
+    if (doc.containsKey("SONY_RM_LP211")) {
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_POWER"){
+        TransmitRawIRCommand(SONY_RM_LP211_POWER, sizeof(SONY_RM_LP211_POWER), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_VIDEO_1"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_VIDEO_1, sizeof(SONY_RM_LP211_SOURCE_VIDEO_1), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_VIDEO_2"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_VIDEO_2, sizeof(SONY_RM_LP211_SOURCE_VIDEO_2), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_VIDEO_3"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_VIDEO_3, sizeof(SONY_RM_LP211_SOURCE_VIDEO_3), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_DVD_LD"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_DVD_LD, sizeof(SONY_RM_LP211_SOURCE_DVD_LD), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_TV_SAT"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_TV_SAT, sizeof(SONY_RM_LP211_SOURCE_TV_SAT), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_TAPE"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_TAPE, sizeof(SONY_RM_LP211_SOURCE_TAPE), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_MD_DAT"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_MD_DAT, sizeof(SONY_RM_LP211_SOURCE_MD_DAT), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_CD_SACD"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_CD_SACD, sizeof(SONY_RM_LP211_SOURCE_CD_SACD), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_TUNER"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_TUNER, sizeof(SONY_RM_LP211_SOURCE_TUNER), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_PHONO"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_PHONO, sizeof(SONY_RM_LP211_SOURCE_PHONO), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_MULTI_CHANEL"){
+        TransmitRawIRCommand(SONY_RM_LP211_SOURCE_MULTI_CHANEL, sizeof(SONY_RM_LP211_SOURCE_MULTI_CHANEL), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_PREVIOUS_TRACK"){
+        TransmitRawIRCommand(SONY_RM_LP211_PREVIOUS_TRACK, sizeof(SONY_RM_LP211_PREVIOUS_TRACK), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_NEXT_TRACK"){
+        TransmitRawIRCommand(SONY_RM_LP211_NEXT_TRACK, sizeof(SONY_RM_LP211_NEXT_TRACK), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SKIP_FORWARD"){
+        TransmitRawIRCommand(SONY_RM_LP211_SKIP_FORWARD, sizeof(SONY_RM_LP211_SKIP_FORWARD), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SKIP_BACK"){
+        TransmitRawIRCommand(SONY_RM_LP211_SKIP_BACK, sizeof(SONY_RM_LP211_SKIP_BACK), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_PLAY"){
+        TransmitRawIRCommand(SONY_RM_LP211_PLAY, sizeof(SONY_RM_LP211_PLAY), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_PAUSE"){
+        TransmitRawIRCommand(SONY_RM_LP211_PAUSE, sizeof(SONY_RM_LP211_PAUSE), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_STOP"){
+        TransmitRawIRCommand(SONY_RM_LP211_STOP, sizeof(SONY_RM_LP211_STOP), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_VOLUME_UP"){
+        TransmitRawIRCommand(SONY_RM_LP211_VOLUME_UP, sizeof(SONY_RM_LP211_VOLUME_UP), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_VOLUME_DOWN"){
+        TransmitRawIRCommand(SONY_RM_LP211_VOLUME_DOWN, sizeof(SONY_RM_LP211_VOLUME_DOWN), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+      if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_MUTE"){
+        TransmitRawIRCommand(SONY_RM_LP211_MUTE, sizeof(SONY_RM_LP211_MUTE), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
+      }
+    }
+    
+    //  reset
+    if (doc.containsKey("reset")){
+      LogEvent(EVENTCATEGORIES::MqttMsg, 1, "Reset", "");
+      defaultSettings();
+      ESP.reset();
+    }
+
+    //  restart
+    if (doc.containsKey("restart")){
+      LogEvent(EVENTCATEGORIES::MqttMsg, 2, "Restart", "");
+      ESP.reset();
+    }
   }
 
-  //  restart
-  if (doc.containsKey("restart")){
-    LogEvent(EVENTCATEGORIES::MqttMsg, 2, "Restart", "");
-    ESP.reset();
-  }
-
-  if (doc.containsKey("TOYOTOMI_CAR_27PAUN")){
-    String s = doc["TOYOTOMI_CAR_27PAUN"];
-    s.toUpperCase();
-    if (s=="ON"){
-      TransmitRawIRCommand(TOYOTOMI_CAR_27PAUN_ON, sizeof(TOYOTOMI_CAR_27PAUN_ON), "TOYOTOMI_CAR_27PAUN", s, 38 );
-    }else{
-      TransmitRawIRCommand(TOYOTOMI_CAR_27PAUN_OFF, sizeof(TOYOTOMI_CAR_27PAUN_OFF), "TOYOTOMI_CAR_27PAUN", s, 38 );
-    }
-  }
-
-  if (doc.containsKey("IR_ELECTRA_ONOFF")){
-    if (doc["IR_ELECTRA_ONOFF"]==1){
-      TransmitRawIRCommand(IR_ELECTRA_ONOFF, sizeof(IR_ELECTRA_ONOFF), "IR_ELECTRA_ONOFF", doc["IR_ELECTRA_ONOFF"], 38 );
-    }
-  } 
-
-  //  SONY_RM_ED022
-  if (doc.containsKey("SONY_RM_ED022")) {
-    String s = doc["SONY_RM_ED022"];
-    s.toUpperCase();
-    if (s=="SONY_RM_ED022_POWER"){
-      TransmitRawIRCommand(SONY_RM_ED022_POWER, sizeof(SONY_RM_ED022_POWER), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_INPUT"){
-      TransmitRawIRCommand(SONY_RM_ED022_INPUT, sizeof(SONY_RM_ED022_INPUT), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_THEATRE"){
-      TransmitRawIRCommand(SONY_RM_ED022_THEATRE, sizeof(SONY_RM_ED022_THEATRE), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_SKIP_BACK"){
-      TransmitRawIRCommand(SONY_RM_ED022_SKIP_BACK, sizeof(SONY_RM_ED022_SKIP_BACK), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_PLAY"){
-      TransmitRawIRCommand(SONY_RM_ED022_PLAY, sizeof(SONY_RM_ED022_PLAY), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_SKIP_FORWARD"){
-      TransmitRawIRCommand(SONY_RM_ED022_SKIP_FORWARD, sizeof(SONY_RM_ED022_SKIP_FORWARD), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_SYNC_MENU"){
-      TransmitRawIRCommand(SONY_RM_ED022_SYNC_MENU, sizeof(SONY_RM_ED022_SYNC_MENU), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_PREVIOUS_TRACK"){
-      TransmitRawIRCommand(SONY_RM_ED022_PREVIOUS_TRACK, sizeof(SONY_RM_ED022_PREVIOUS_TRACK), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_STOP"){
-      TransmitRawIRCommand(SONY_RM_ED022_STOP, sizeof(SONY_RM_ED022_STOP), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NEXT_TRACK"){
-      TransmitRawIRCommand(SONY_RM_ED022_NEXT_TRACK, sizeof(SONY_RM_ED022_NEXT_TRACK), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_ARROW_UP"){
-      TransmitRawIRCommand(SONY_RM_ED022_ARROW_UP, sizeof(SONY_RM_ED022_ARROW_UP), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_ARROW_DOWN"){
-      TransmitRawIRCommand(SONY_RM_ED022_ARROW_DOWN, sizeof(SONY_RM_ED022_ARROW_DOWN), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_ARROW_LEFT"){
-      TransmitRawIRCommand(SONY_RM_ED022_ARROW_LEFT, sizeof(SONY_RM_ED022_ARROW_LEFT), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_ARROW_RIGHT"){
-      TransmitRawIRCommand(SONY_RM_ED022_ARROW_RIGHT, sizeof(SONY_RM_ED022_ARROW_RIGHT), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_ENTER"){
-      TransmitRawIRCommand(SONY_RM_ED022_ENTER, sizeof(SONY_RM_ED022_ENTER), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_I_MANUAL"){
-      TransmitRawIRCommand(SONY_RM_ED022_I_MANUAL, sizeof(SONY_RM_ED022_I_MANUAL), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_SCENE"){
-      TransmitRawIRCommand(SONY_RM_ED022_SCENE, sizeof(SONY_RM_ED022_SCENE), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_ASPECT_RATIO"){
-      TransmitRawIRCommand(SONY_RM_ED022_ASPECT_RATIO, sizeof(SONY_RM_ED022_ASPECT_RATIO), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_DIGITAL_ANALOG"){
-      TransmitRawIRCommand(SONY_RM_ED022_DIGITAL_ANALOG, sizeof(SONY_RM_ED022_DIGITAL_ANALOG), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_FAVOURITES"){
-      TransmitRawIRCommand(SONY_RM_ED022_FAVOURITES, sizeof(SONY_RM_ED022_FAVOURITES), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_GUIDE"){
-      TransmitRawIRCommand(SONY_RM_ED022_GUIDE, sizeof(SONY_RM_ED022_GUIDE), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_INFO"){
-      TransmitRawIRCommand(SONY_RM_ED022_INFO, sizeof(SONY_RM_ED022_INFO), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_RETURN"){
-      TransmitRawIRCommand(SONY_RM_ED022_RETURN, sizeof(SONY_RM_ED022_RETURN), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_OPTIONS"){
-      TransmitRawIRCommand(SONY_RM_ED022_OPTIONS, sizeof(SONY_RM_ED022_OPTIONS), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_HOME"){
-      TransmitRawIRCommand(SONY_RM_ED022_HOME, sizeof(SONY_RM_ED022_HOME), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_RED"){
-      TransmitRawIRCommand(SONY_RM_ED022_RED, sizeof(SONY_RM_ED022_RED), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_GREEN"){
-      TransmitRawIRCommand(SONY_RM_ED022_GREEN, sizeof(SONY_RM_ED022_GREEN), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_YELLOW"){
-      TransmitRawIRCommand(SONY_RM_ED022_YELLOW, sizeof(SONY_RM_ED022_YELLOW), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_BLUE"){
-      TransmitRawIRCommand(SONY_RM_ED022_BLUE, sizeof(SONY_RM_ED022_BLUE), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NUMERIC_1"){
-      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_1, sizeof(SONY_RM_ED022_NUMERIC_1), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NUMERIC_2"){
-      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_2, sizeof(SONY_RM_ED022_NUMERIC_2), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NUMERIC_3"){
-      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_3, sizeof(SONY_RM_ED022_NUMERIC_3), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NUMERIC_4"){
-      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_4, sizeof(SONY_RM_ED022_NUMERIC_4), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NUMERIC_5"){
-      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_5, sizeof(SONY_RM_ED022_NUMERIC_5), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NUMERIC_6"){
-      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_6, sizeof(SONY_RM_ED022_NUMERIC_6), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NUMERIC_7"){
-      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_7, sizeof(SONY_RM_ED022_NUMERIC_7), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NUMERIC_8"){
-      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_8, sizeof(SONY_RM_ED022_NUMERIC_8), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NUMERIC_9"){
-      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_9, sizeof(SONY_RM_ED022_NUMERIC_9), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_NUMERIC_0"){
-      TransmitRawIRCommand(SONY_RM_ED022_NUMERIC_0, sizeof(SONY_RM_ED022_NUMERIC_0), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_TELETEXT"){
-      TransmitRawIRCommand(SONY_RM_ED022_TELETEXT, sizeof(SONY_RM_ED022_TELETEXT), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_TELETEXT2"){
-      TransmitRawIRCommand(SONY_RM_ED022_TELETEXT2, sizeof(SONY_RM_ED022_TELETEXT2), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_MUTE"){
-      TransmitRawIRCommand(SONY_RM_ED022_MUTE, sizeof(SONY_RM_ED022_MUTE), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_VOLUME_UP"){
-      TransmitRawIRCommand(SONY_RM_ED022_VOLUME_UP, sizeof(SONY_RM_ED022_VOLUME_UP), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_VOLUME_DOWN"){
-      TransmitRawIRCommand(SONY_RM_ED022_VOLUME_DOWN, sizeof(SONY_RM_ED022_VOLUME_DOWN), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_PROGRAM_UP"){
-      TransmitRawIRCommand(SONY_RM_ED022_PROGRAM_UP, sizeof(SONY_RM_ED022_PROGRAM_UP), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_PROGRAM_DOWN"){
-      TransmitRawIRCommand(SONY_RM_ED022_PROGRAM_DOWN, sizeof(SONY_RM_ED022_PROGRAM_DOWN), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-    if (s=="SONY_RM_ED022_AUDIO"){
-      TransmitRawIRCommand(SONY_RM_ED022_AUDIO, sizeof(SONY_RM_ED022_AUDIO), "SONY_RM_ED022", doc["SONY_RM_ED022"], 38 );
-    }
-  }
-  //  SONY_RM_LP211
-  if (doc.containsKey("SONY_RM_LP211")) {
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_POWER"){
-      TransmitRawIRCommand(SONY_RM_LP211_POWER, sizeof(SONY_RM_LP211_POWER), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_VIDEO_1"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_VIDEO_1, sizeof(SONY_RM_LP211_SOURCE_VIDEO_1), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_VIDEO_2"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_VIDEO_2, sizeof(SONY_RM_LP211_SOURCE_VIDEO_2), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_VIDEO_3"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_VIDEO_3, sizeof(SONY_RM_LP211_SOURCE_VIDEO_3), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_DVD_LD"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_DVD_LD, sizeof(SONY_RM_LP211_SOURCE_DVD_LD), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_TV_SAT"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_TV_SAT, sizeof(SONY_RM_LP211_SOURCE_TV_SAT), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_TAPE"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_TAPE, sizeof(SONY_RM_LP211_SOURCE_TAPE), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_MD_DAT"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_MD_DAT, sizeof(SONY_RM_LP211_SOURCE_MD_DAT), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_CD_SACD"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_CD_SACD, sizeof(SONY_RM_LP211_SOURCE_CD_SACD), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_TUNER"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_TUNER, sizeof(SONY_RM_LP211_SOURCE_TUNER), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_PHONO"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_PHONO, sizeof(SONY_RM_LP211_SOURCE_PHONO), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SOURCE_MULTI_CHANEL"){
-      TransmitRawIRCommand(SONY_RM_LP211_SOURCE_MULTI_CHANEL, sizeof(SONY_RM_LP211_SOURCE_MULTI_CHANEL), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_PREVIOUS_TRACK"){
-      TransmitRawIRCommand(SONY_RM_LP211_PREVIOUS_TRACK, sizeof(SONY_RM_LP211_PREVIOUS_TRACK), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_NEXT_TRACK"){
-      TransmitRawIRCommand(SONY_RM_LP211_NEXT_TRACK, sizeof(SONY_RM_LP211_NEXT_TRACK), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SKIP_FORWARD"){
-      TransmitRawIRCommand(SONY_RM_LP211_SKIP_FORWARD, sizeof(SONY_RM_LP211_SKIP_FORWARD), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_SKIP_BACK"){
-      TransmitRawIRCommand(SONY_RM_LP211_SKIP_BACK, sizeof(SONY_RM_LP211_SKIP_BACK), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_PLAY"){
-      TransmitRawIRCommand(SONY_RM_LP211_PLAY, sizeof(SONY_RM_LP211_PLAY), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_PAUSE"){
-      TransmitRawIRCommand(SONY_RM_LP211_PAUSE, sizeof(SONY_RM_LP211_PAUSE), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_STOP"){
-      TransmitRawIRCommand(SONY_RM_LP211_STOP, sizeof(SONY_RM_LP211_STOP), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_VOLUME_UP"){
-      TransmitRawIRCommand(SONY_RM_LP211_VOLUME_UP, sizeof(SONY_RM_LP211_VOLUME_UP), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_VOLUME_DOWN"){
-      TransmitRawIRCommand(SONY_RM_LP211_VOLUME_DOWN, sizeof(SONY_RM_LP211_VOLUME_DOWN), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-    if (doc["SONY_RM_LP211"]=="SONY_RM_LP211_MUTE"){
-      TransmitRawIRCommand(SONY_RM_LP211_MUTE, sizeof(SONY_RM_LP211_MUTE), "SONY_RM_LP211", doc["SONY_RM_LP211"], 38 );
-    }
-  }
 }
+
 
 void setup() {
   delay(1); //  Needed for PlatformIO serial monitor
@@ -1188,7 +1204,7 @@ void setup() {
   os_timer_arm(&heartbeatTimer, appConfig.heartbeatInterval * 1000, true);
 
   //  Randomizer
-  srand(now());
+  SetRandomSeed();
 
   //  IR
   #if DECODE_HASH
@@ -1207,7 +1223,7 @@ void loop(){
 
   if (isAccessPoint){
     if (!isAccessPointCreated){
-      Serial.print(" Could not connect to ");
+      Serial.print("Could not connect to ");
       Serial.print(appConfig.ssid);
       Serial.println("\r\nReverting to Access Point mode.");
 
@@ -1277,7 +1293,7 @@ void loop(){
           WiFi.begin(appConfig.ssid, appConfig.password);
 
           // Initialize iteration counter
-          char attempt = 0;
+          uint8_t attempt = 0;
 
           while ((WiFi.status() != WL_CONNECTED) && (attempt++ < WIFI_CONNECTION_TIMEOUT)) {
             digitalWrite(CONNECTION_STATUS_LED_GPIO, LOW);
@@ -1309,7 +1325,7 @@ void loop(){
         if (checkInternetConnection()) {
           // We have an Internet connection
 
-          if (! ntpInitialized) {
+          if (!ntpInitialized) {
             // We are connected to the Internet for the first time so set NTP provider
             initNTP();
 
@@ -1329,16 +1345,20 @@ void loop(){
         ArduinoOTA.handle();
 
         if (!PSclient.connected()) {
-          PSclient.set_server(appConfig.mqttServer, appConfig.mqttPort);
+          PSclient.setServer(appConfig.mqttServer, appConfig.mqttPort);
+            String clientId = "ESP8266Client-";
+            clientId += String(random(0xffff), HEX);
 
-          if (PSclient.connect("ESP-" + String(ESP.getChipId()), MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/STATE", 0, true, "offline" )){
-            PSclient.set_callback(mqtt_callback);
-            PSclient.subscribe(MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/cmnd", 0);
+          if (PSclient.connect(clientId.c_str(), (MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/STATE").c_str(), 0, true, "offline" )){
+            PSclient.setCallback(mqtt_callback);
 
-            PSclient.publish(MQTT::Publish(MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/STATE", "online" ).set_qos(0).set_retain(true));
+            PSclient.subscribe((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/cmnd").c_str(), 0);
+
+            PSclient.publish((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/STATE").c_str(), "online", false);
             LogEvent(EVENTCATEGORIES::Conn, 1, "Node online", WiFi.localIP().toString());
           }
         }
+
 
         if (irrecv.decode(&results)) {
           // Check if we got an IR message that was to big for our capture buffer.
@@ -1361,7 +1381,7 @@ void loop(){
           Serial.println();    // Blank line between entries
           irrecv.resume(); // Receive the next value
 
-          PSclient.publish(MQTT::Publish(MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/RESULT", resultToSourceCode(&results) ).set_qos(0));
+          PSclient.publish((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/RESULT").c_str(), resultToSourceCode(&results).c_str(), 0 );
           LogEvent(EVENTCATEGORIES::IRreceived, results.decode_type, "IR command", resultToSourceCode(&results));
         }
 
