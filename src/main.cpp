@@ -151,6 +151,7 @@ bool loadSettings(config& data) {
   }
   else
   {
+    sprintf(defaultSSID, "%s-%u", DEFAULT_MQTT_TOPIC, ESP.getChipId());
     strcpy(appConfig.mqttTopic, defaultSSID);
   }
   
@@ -225,6 +226,8 @@ void defaultSettings(){
   #endif
 
   appConfig.mqttPort = DEFAULT_MQTT_PORT;
+
+  sprintf(defaultSSID, "%s-%u", DEFAULT_MQTT_TOPIC, ESP.getChipId());
   strcpy(appConfig.mqttTopic, defaultSSID);
 
   appConfig.timeZone = 2;
@@ -792,7 +795,7 @@ void SendReceivedIRCode(String protocol, String data){
 
     serializeJson(doc, myJsonString);
 
-    PSclient.publish((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + "/" + appConfig.mqttTopic + "/RESULT").c_str(), myJsonString.c_str(), 0 );
+    PSclient.publish((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + "/" + appConfig.mqttTopic + "/RESULT").c_str(), myJsonString.c_str(), false );
   }
 }
 
@@ -842,7 +845,6 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
       digitalWrite(CONNECTION_STATUS_LED_GPIO, !digitalRead(CONNECTION_STATUS_LED_GPIO));
       delay(50);
     }
-    return;
   }
   else{
     //  It IS a JSON string
@@ -1100,7 +1102,6 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 
 }
 
-
 void setup() {
   delay(1); //  Needed for PlatformIO serial monitor
   Serial.begin(115200);
@@ -1129,11 +1130,9 @@ void setup() {
     Serial.println("Config loaded.");
   }
 
-  sprintf(defaultSSID, "%s-%u", appConfig.mqttTopic, ESP.getChipId());
   WiFi.hostname(defaultSSID);
 
   //  GPIOs
-
   //  outputs
   pinMode(CONNECTION_STATUS_LED_GPIO, OUTPUT);
   digitalWrite(CONNECTION_STATUS_LED_GPIO, HIGH);
