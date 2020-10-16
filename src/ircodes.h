@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 
+//  Wifi-IR Gateway by Viktor Takacs is licensed under CC BY-NC-SA 4.0.
+//  To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0 
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 const uint16_t kCaptureBufferSize = 1024;
 const uint8_t kTimeout = 50;  // Milli-Seconds
 const uint16_t kFrequency = 38000;  // in Hz. e.g. 38kHz.
