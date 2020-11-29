@@ -5,7 +5,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define __debugSettings
+//#define __debugSettings
 #include "includes.h"
 
 //  Web server
@@ -412,7 +412,7 @@ void handleRoot() {
 
   f = LittleFS.open("/index.html", "r");
 
-  String FirmwareVersionString = String(FIRMWARE_VERSION) + " @ " + String(__TIME__) + " - " + String(__DATE__);
+  String FirmwareVersionString = String(FIRMWARE_VERSION);
 
   String s, htmlString;
 
@@ -1117,7 +1117,7 @@ void setup() {
   Serial.print(ESP.getChipId());
   Serial.println("...");
 
-  String FirmwareVersionString = String(FIRMWARE_VERSION) + " @ " + String(__TIME__) + " - " + String(__DATE__);
+  String FirmwareVersionString = String(FIRMWARE_VERSION);
 
   Serial.println("Hardware ID:      " + (String)HARDWARE_ID);
   Serial.println("Hardware version: " + (String)HARDWARE_VERSION);
@@ -1218,7 +1218,7 @@ void setup() {
   irrecv.setUnknownThreshold(kMinUnknownSize);
   #endif  // DECODE_HASH
   irsend.begin();
-  //irrecv.enableIRIn();
+  irrecv.enableIRIn();
 
   // Set the initial connection state
   connectionState = STATE_CHECK_WIFI_CONNECTION;
@@ -1236,6 +1236,8 @@ void loop(){
       delay(500);
 
       WiFi.mode(WiFiMode::WIFI_AP);
+      sprintf(defaultSSID, "%s-%u", DEFAULT_MQTT_TOPIC, ESP.getChipId());
+
       WiFi.softAP(defaultSSID, DEFAULT_PASSWORD);
 
       IPAddress myIP;
@@ -1374,15 +1376,16 @@ void loop(){
           // Display any extra A/C info if we have it.
           String description = IRAcUtils::resultAcToString(&results);
           if (description.length()) Serial.println(D_STR_MESGDESC ": " + description);
-      #if LEGACY_TIMING_INFO
-          // Output legacy RAW timing info of the result.
-          Serial.println(resultToTimingInfo(&results));
-      #endif  // LEGACY_TIMING_INFO
+
+            #if LEGACY_TIMING_INFO
+                // Output legacy RAW timing info of the result.
+                Serial.println(resultToTimingInfo(&results));
+            #endif  // LEGACY_TIMING_INFO
 
           // Output the results as source code
           Serial.println(resultToSourceCode(&results));
-          Serial.println();    // Blank line between entries
-          irrecv.resume(); // Receive the next value
+          Serial.println(); // Blank line between entries
+          irrecv.resume();  // Receive the next value
 
           PSclient.publish((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/RESULT").c_str(), resultToSourceCode(&results).c_str(), 0 );
           LogEvent(EVENTCATEGORIES::IRreceived, results.decode_type, "IR command", resultToSourceCode(&results));

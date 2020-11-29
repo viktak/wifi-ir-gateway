@@ -31,9 +31,12 @@ byte packetBuffer[NTP_PACKET_SIZE]; // Buffer to hold incoming and outgoing pack
 
 // Don't hardwire the IP address or we won't get the benefits of the time server pool.
 IPAddress timeServerIP;
-//const char *ntpServerName = "time.nist.gov";
-//const char *ntpServerName = "nl.pool.ntp.org";
+#ifdef __debugSettings
 const char *ntpServerName = "192.168.1.3";
+#else
+const char *ntpServerName = "time.nist.gov";
+//const char *ntpServerName = "nl.pool.ntp.org";
+#endif
 
 // Send an NTP request to the time server at the given address
 unsigned long sendNTPpacket(IPAddress& address) {
