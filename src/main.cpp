@@ -5,7 +5,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//#define __debugSettings
+#define __debugSettings
 #include "includes.h"
 
 //  Web server
@@ -408,7 +408,7 @@ void handleRoot() {
   if (f.available()) headerString = f.readString();
   f.close();
 
-    time_t localTime = myTZ.toLocal(now(), &tcr);
+  time_t localTime = timezones[appConfig.timeZone]->toLocal(now(), &tcr);
 
   f = LittleFS.open("/index.html", "r");
 
@@ -448,7 +448,7 @@ void handleStatus() {
   if (f.available()) headerString = f.readString();
   f.close();
 
-  time_t localTime = myTZ.toLocal(now(), &tcr);
+  time_t localTime = timezones[appConfig.timeZone]->toLocal(now(), &tcr);
 
   String s;
 
@@ -572,7 +572,7 @@ void handleGeneralSettings() {
   if (f.available()) headerString = f.readString();
   f.close();
 
-  time_t localTime = myTZ.toLocal(now(), &tcr);
+  time_t localTime = timezones[appConfig.timeZone]->toLocal(now(), &tcr);
 
   f = LittleFS.open("/generalsettings.html", "r");
 
@@ -580,7 +580,7 @@ void handleGeneralSettings() {
 
   char ss[2];
 
-  for (signed char i = -12; i < 15; i++) {
+  for (signed char i = 0; i < sizeof(tzDescriptions)/sizeof(tzDescriptions[0]); i++) {
     itoa(i, ss, DEC);
     timezoneslist+="<option ";
     if (appConfig.timeZone == i){
@@ -588,14 +588,10 @@ void handleGeneralSettings() {
     }
     timezoneslist+= "value=\"";
     timezoneslist+=ss;
-    timezoneslist+="\">UTC ";
-    if (i>0){
-      timezoneslist+="+";
-    }
-    if (i!=0){
-      timezoneslist+=ss;
-      timezoneslist+=":00";
-    }
+    timezoneslist+="\">";
+
+    timezoneslist+= tzDescriptions[i];
+
     timezoneslist+="</option>";
     timezoneslist+="\n";
   }
@@ -650,7 +646,7 @@ void handleNetworkSettings() {
   if (f.available()) headerString = f.readString();
   f.close();
 
-  time_t localTime = myTZ.toLocal(now(), &tcr);
+  time_t localTime = timezones[appConfig.timeZone]->toLocal(now(), &tcr);
 
   f = LittleFS.open("/networksettings.html", "r");
   String s, htmlString, wifiList;
@@ -705,7 +701,7 @@ void handleTools() {
   if (f.available()) headerString = f.readString();
   f.close();
 
-  time_t localTime = myTZ.toLocal(now(), &tcr);
+  time_t localTime = timezones[appConfig.timeZone]->toLocal(now(), &tcr);
 
   f = LittleFS.open("/tools.html", "r");
 

@@ -43,6 +43,7 @@
 #include <Time.h>
 #include <Timezone.h>
 #include "NTP.h"
+#include <TimeChangeRules.h>
 
 #include "structs.h"
 
