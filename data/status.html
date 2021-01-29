@@ -19,6 +19,7 @@
                         <li class="active"><a href="/status.html">Status</a></li>
                         <li><a href="/generalsettings.html">General</a></li>
                         <li><a href="/networksettings.html">Network</a></li>
+                        <li><a href="/irremote.html">IR Remote</a></li>
                         <li><a href="/tools.html">Tools</a></li>
                         <li><a href="/login.html?DISCONNECT=YES">Logout</a></li>
                     </ul>
@@ -27,6 +28,47 @@
         </nav>
         <div class="well">
             These are the current settings of this ESP.
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2>Node: %espid%</h2>
+            </div>
+            <div class="panel-body">
+                <table class="table table-hover">
+                    <tbody>
+                        <tr>
+                            <td width="40%">
+                                Hardware ID:
+                            </td>
+                            <td width="60%">
+                                %hardwareid%
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Hardware version:</td>
+                            <td>%hardwareversion%</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Firmware ID:
+                            </td>
+                            <td>
+                                %firmwareid%
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Firmware version:
+                            </td>
+                            <td>
+                                %firmwareversion%
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="panel panel-default">

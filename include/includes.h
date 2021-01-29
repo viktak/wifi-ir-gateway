@@ -53,5 +53,7 @@
 #include "ir-sony-rm-ed022-raw.h"
 #include "ir-sony-rm-lp211-raw.h"
 #include "ir-toyotomi-car-27paun-raw.h"
+#include "sharp.h"
+#include "yamaha-rav536.h"
 
 #endif

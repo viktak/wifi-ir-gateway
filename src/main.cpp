@@ -35,11 +35,6 @@ IRsend irsend(IR_SEND_GPIO);
 
 WiFiUDP Udp;
 
-// Daylight savings time rules for Greece
-TimeChangeRule myDST = {"MDT", Fourth, Sun, Mar, 2, DST_TIMEZONE_OFFSET * 60};
-TimeChangeRule mySTD = {"MST", Fourth,  Sun, Oct, 2,  ST_TIMEZONE_OFFSET * 60};
-Timezone myTZ(myDST, mySTD);
-
 void LogEvent(int Category, int ID, String Title, String Data){
   if (PSclient.connected()){
 
@@ -158,8 +153,7 @@ bool loadSettings(config& data) {
   }
   else
   {
-    sprintf(defaultSSID, "%s-%u", DEFAULT_MQTT_TOPIC, ESP.getChipId());
-    strcpy(appConfig.mqttTopic, defaultSSID);
+    strcpy(appConfig.mqttTopic, DEFAULT_MQTT_TOPIC);
   }
   
   if (doc["friendlyName"]){
@@ -186,6 +180,9 @@ bool loadSettings(config& data) {
     appConfig.heartbeatInterval = DEFAULT_HEARTBEAT_INTERVAL;
   }
   
+  String ma = WiFi.macAddress();
+  ma.replace(":","");
+  sprintf(defaultSSID, "%s-%s", appConfig.mqttTopic, ma.substring(6, 12).c_str());
   return true;
 }
 
@@ -322,6 +319,29 @@ String TimeIntervalToString(time_t time){
   return myTime;
 }
 
+void SendReceivedIRCode(String protocol, String data){
+
+  if (PSclient.connected()){
+
+    const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(6) + 180;
+    StaticJsonDocument<capacity> doc;
+
+    doc["Protocol"] = protocol;
+    doc["Data"] = data;
+
+    #ifdef __debugSettings
+    serializeJsonPretty(doc,Serial);
+    Serial.println();
+    #endif
+
+    String myJsonString;
+
+    serializeJson(doc, myJsonString);
+
+    PSclient.publish((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + "/" + appConfig.mqttTopic + "/RESULT").c_str(), myJsonString.c_str(), false );
+  }
+}
+
 void beforeIRSend(){
   digitalWrite(ACTIVITY_LED_GPIO, LOW);  
   irrecv.disableIRIn();
@@ -330,6 +350,14 @@ void beforeIRSend(){
 void afterIRSend(){
   irrecv.enableIRIn();
   digitalWrite(ACTIVITY_LED_GPIO, HIGH);  
+}
+
+void TransmitRawIRCommand(uint16_t buf[], uint16_t size, String remoteName, String commandName, uint16_t kHz ) {
+  beforeIRSend();
+  irsend.sendRaw(buf, size, kHz);
+  SendReceivedIRCode(remoteName, commandName);
+  afterIRSend();
+  LogEvent(EVENTCATEGORIES::MqttMsg, 2, remoteName, commandName);
 }
 
 bool is_authenticated(){
@@ -374,7 +402,7 @@ void handleLogin(){
   if (f.available()) headerString = f.readString();
   f.close();
 
-  time_t localTime = myTZ.toLocal(now(), &tcr);
+  time_t localTime = timezones[appConfig.timeZone]->toLocal(now(), &tcr);
 
   f = LittleFS.open("/login.html", "r");
 
@@ -449,6 +477,7 @@ void handleStatus() {
   f.close();
 
   time_t localTime = timezones[appConfig.timeZone]->toLocal(now(), &tcr);
+  String FirmwareVersionString = String(FIRMWARE_VERSION);
 
   String s;
 
@@ -462,6 +491,12 @@ void handleStatus() {
     //  System information
     if (s.indexOf("%pageheader%")>-1) s.replace("%pageheader%", headerString);
     if (s.indexOf("%year%")>-1) s.replace("%year%", (String)year(localTime));
+    if (s.indexOf("%espid%")>-1) s.replace("%espid%", (String)ESP.getChipId());
+    if (s.indexOf("%hardwareid%")>-1) s.replace("%hardwareid%", HARDWARE_ID);
+    if (s.indexOf("%hardwareversion%")>-1) s.replace("%hardwareversion%", HARDWARE_VERSION);
+    if (s.indexOf("%firmwareid%")>-1) s.replace("%firmwareid%", SOFTWARE_ID);
+    if (s.indexOf("%firmwareversion%")>-1) s.replace("%firmwareversion%", FirmwareVersionString);
+
     if (s.indexOf("%chipid%")>-1) s.replace("%chipid%", (String)ESP.getChipId());
     if (s.indexOf("%uptime%")>-1) s.replace("%uptime%", TimeIntervalToString(millis()/1000));
     if (s.indexOf("%currenttime%")>-1) s.replace("%currenttime%", DateTimeToString(localTime));
@@ -580,10 +615,10 @@ void handleGeneralSettings() {
 
   char ss[2];
 
-  for (signed char i = 0; i < sizeof(tzDescriptions)/sizeof(tzDescriptions[0]); i++) {
+  for (unsigned long i = 0; i < sizeof(tzDescriptions)/sizeof(tzDescriptions[0]); i++) {
     itoa(i, ss, DEC);
     timezoneslist+="<option ";
-    if (appConfig.timeZone == i){
+    if (appConfig.timeZone == (signed char)i){
       timezoneslist+= "selected ";
     }
     timezoneslist+= "value=\"";
@@ -614,6 +649,55 @@ void handleGeneralSettings() {
   server.send(200, "text/html", htmlString);
 
   LogEvent(EVENTCATEGORIES::PageHandler, 2, "Page served", "generalsettings.html");
+}
+
+void handleIRRemote() {
+  LogEvent(EVENTCATEGORIES::PageHandler, 1, "Page requested", "irremote.html");
+
+  if (!is_authenticated()){
+     String header = "HTTP/1.1 301 OK\r\nLocation: /login.html\r\nCache-Control: no-cache\r\n\r\n";
+     server.sendContent(header);
+     return;
+   }
+
+
+  if (server.method() == HTTPMethod::HTTP_POST){
+    for (int i = 0; i < server.args(); i++) {
+      Serial.print(server.argName(i));
+      Serial.print(": ");
+      Serial.println(server.arg(i));
+    }
+   irrecv.disableIRIn();
+    if(server.hasArg("clickedAction")){
+      if(server.arg("clickedAction")=="btnAmplifierOnOff"){
+        TransmitRawIRCommand(SHARP_POWER, sizeof(SHARP_POWER), "SHARP_POWER", "SHARP_POWER", 38 );
+      }
+    }
+   irrecv.enableIRIn();
+  }
+
+  File f = LittleFS.open("/pageheader.html", "r");
+  String headerString;
+  if (f.available()) headerString = f.readString();
+  f.close();
+
+  time_t localTime = timezones[appConfig.timeZone]->toLocal(now(), &tcr);
+
+  f = LittleFS.open("/irremote.html", "r");
+
+  String s, htmlString;
+
+  while (f.available()){
+    s = f.readStringUntil('\n');
+    if (s.indexOf("%pageheader%")>-1) s.replace("%pageheader%", headerString);
+    if (s.indexOf("%year%")>-1) s.replace("%year%", (String)year(localTime));
+
+    htmlString+=s;
+  }
+  Serial.println(ESP.getFreeHeap());
+  f.close();
+  server.send(200, "text/html", htmlString);
+  LogEvent(EVENTCATEGORIES::PageHandler, 2, "Page served", "irremote.html");
 }
 
 void handleNetworkSettings() {
@@ -748,7 +832,7 @@ void SendHeartbeat(){
 
   if (PSclient.connected()){
 
-    time_t localTime = myTZ.toLocal(now(), &tcr);
+    time_t localTime = timezones[appConfig.timeZone]->toLocal(now(), &tcr);
 
     const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(6) + 180;
     StaticJsonDocument<capacity> doc;
@@ -777,37 +861,6 @@ void SendHeartbeat(){
   }
 
   needsHeartbeat = false;
-}
-
-void SendReceivedIRCode(String protocol, String data){
-
-  if (PSclient.connected()){
-
-    const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(6) + 180;
-    StaticJsonDocument<capacity> doc;
-
-    doc["Protocol"] = protocol;
-    doc["Data"] = data;
-
-    #ifdef __debugSettings
-    serializeJsonPretty(doc,Serial);
-    Serial.println();
-    #endif
-
-    String myJsonString;
-
-    serializeJson(doc, myJsonString);
-
-    PSclient.publish((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + "/" + appConfig.mqttTopic + "/RESULT").c_str(), myJsonString.c_str(), false );
-  }
-}
-
-void TransmitRawIRCommand(uint16_t buf[], uint16_t size, String remoteName, String commandName, uint16_t kHz ) {
-  beforeIRSend();
-  irsend.sendRaw(buf, size, kHz);
-  SendReceivedIRCode(remoteName, commandName);
-  afterIRSend();
-  LogEvent(EVENTCATEGORIES::MqttMsg, 2, remoteName, commandName);
 }
 
 /*
@@ -1178,9 +1231,10 @@ void setup() {
 
   Serial.println();
 
-  server.on("/", handleRoot);
+  server.on("/", handleStatus);
   server.on("/status.html", handleStatus);
   server.on("/generalsettings.html", handleGeneralSettings);
+  server.on("/irremote.html", handleIRRemote);
   server.on("/networksettings.html", handleNetworkSettings);
   server.on("/tools.html", handleTools);
   server.on("/login.html", handleLogin);
