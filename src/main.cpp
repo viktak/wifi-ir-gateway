@@ -1160,7 +1160,7 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 
 void setup() {
   delay(1); //  Needed for PlatformIO serial monitor
-  Serial.begin(115200);
+  Serial.begin(DEBUG_SPEED);
   Serial.setDebugOutput(false);
   Serial.print("\n\n\n\rBooting node:     ");
   Serial.print(ESP.getChipId());
