@@ -915,6 +915,8 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
       s.toUpperCase();
       if (s=="ON"){
         TransmitRawIRCommand(TOYOTOMI_CAR_27PAUN_ON, sizeof(TOYOTOMI_CAR_27PAUN_ON), "TOYOTOMI_CAR_27PAUN", s, 38 );
+      }else if (s=="ON_COOL"){
+        TransmitRawIRCommand(TOYOTOMI_CAR_27PAUN_ON_COOLING, sizeof(TOYOTOMI_CAR_27PAUN_ON_COOLING), "TOYOTOMI_CAR_27PAUN", s, 38 );
       }else{
         TransmitRawIRCommand(TOYOTOMI_CAR_27PAUN_OFF, sizeof(TOYOTOMI_CAR_27PAUN_OFF), "TOYOTOMI_CAR_27PAUN", s, 38 );
       }
