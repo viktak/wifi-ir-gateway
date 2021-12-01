@@ -4,3 +4,5 @@
 .gcc-flags.json
 .pio/**
 .vscode/**
+buildserialnumber
+src/version.h
