@@ -180,9 +180,6 @@ bool loadSettings(config& data) {
     appConfig.heartbeatInterval = DEFAULT_HEARTBEAT_INTERVAL;
   }
   
-  String ma = WiFi.macAddress();
-  ma.replace(":","");
-  sprintf(defaultSSID, "%s-%s", appConfig.mqttTopic, ma.substring(6, 12).c_str());
   return true;
 }
 
@@ -574,10 +571,11 @@ void handleGeneralSettings() {
 
     //  MQTT settings
     if (server.hasArg("mqttbroker")){
-      if ((String)appConfig.mqttServer != server.arg("mqttbroker"))
+      if ((String)appConfig.mqttServer != server.arg("mqttbroker")){
         mqttDirty = true;
         sprintf(appConfig.mqttServer, "%s", server.arg("mqttbroker").c_str());
         LogEvent(EVENTCATEGORIES::MqttParamChange, 1, "New MQTT broker", appConfig.mqttServer);
+      }
     }
 
     if (server.hasArg("mqttport")){
@@ -588,10 +586,11 @@ void handleGeneralSettings() {
     }
 
     if (server.hasArg("mqtttopic")){
-      if ((String)appConfig.mqttTopic != server.arg("mqtttopic"))
+      if ((String)appConfig.mqttTopic != server.arg("mqtttopic")){
         mqttDirty = true;
         sprintf(appConfig.mqttTopic, "%s", server.arg("mqtttopic").c_str());
         LogEvent(EVENTCATEGORIES::MqttParamChange, 1, "New MQTT topic", appConfig.mqttTopic);
+      }
     }
 
     if (mqttDirty)
@@ -1188,8 +1187,6 @@ void setup() {
     Serial.println("Config loaded.");
   }
 
-  WiFi.hostname(defaultSSID);
-
   //  GPIOs
   //  outputs
   pinMode(CONNECTION_STATUS_LED_GPIO, OUTPUT);
@@ -1243,11 +1240,7 @@ void setup() {
 
   server.onNotFound(handleNotFound);
 
-  //  Web server
-  if (MDNS.begin("esp8266")) {
-    Serial.println("MDNS responder started.");
-  }
-
+  
   //  Start HTTP (web) server
   server.begin();
   Serial.println("HTTP server started.");
@@ -1295,6 +1288,8 @@ void loop(){
       IPAddress myIP;
       myIP = WiFi.softAPIP();
       isAccessPointCreated = true;
+
+      if (MDNS.begin(appConfig.mqttTopic)) Serial.println("MDNS responder started.");
 
       Serial.println("Access point created. Use the following information to connect to the ESP device, then follow the on-screen instructions to connect to a different wifi network:");
 
@@ -1350,6 +1345,7 @@ void loop(){
           WiFi.mode(WIFI_STA);
 
           // Start connection process
+          WiFi.hostname((String)appConfig.mqttTopic);
           WiFi.begin(appConfig.ssid, appConfig.password);
 
           // Initialize iteration counter
@@ -1375,6 +1371,7 @@ void loop(){
           Serial.println(" Success!");
           Serial.print("IP address: ");
           Serial.println(WiFi.localIP());
+          if (MDNS.begin(appConfig.mqttTopic)) Serial.println("MDNS responder started.");
           connectionState = STATE_CHECK_INTERNET_CONNECTION;
         }
         break;
@@ -1406,7 +1403,7 @@ void loop(){
 
         if (!PSclient.connected()) {
           PSclient.setServer(appConfig.mqttServer, appConfig.mqttPort);
-          if (PSclient.connect(defaultSSID, (MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/STATE").c_str(), 0, true, "offline" )){
+          if (PSclient.connect(appConfig.mqttTopic, (MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/STATE").c_str(), 0, true, "offline" )){
             PSclient.setCallback(mqtt_callback);
 
             PSclient.subscribe((MQTT_CUSTOMER + String("/") + MQTT_PROJECT + String("/") + appConfig.mqttTopic + "/cmnd").c_str(), 0);
