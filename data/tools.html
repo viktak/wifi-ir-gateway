@@ -1,7 +1,29 @@
 ﻿<!DOCTYPE html>
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
-%pageheader%
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>ActoSenso Node</title>
+    <link href="favico.ico" rel="shortcut icon" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+
+    <!-- Latest compiled and minified CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/cerulean/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-fUMURLTdEcpeYHly3PAwggI3l2UvdHNg/I+8LRph7hLDcAZm77YfDx3Tjum9d3vK" crossorigin="anonymous">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+        integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+        crossorigin="anonymous"></script>
+
+</head>
+
 <body>
     <div class="container-fluid">
         <nav class="navbar navbar-default">
@@ -16,12 +38,12 @@
                 </div>
                 <div class="collapse navbar-collapse" id="myNavbar">
                     <ul class="nav navbar-nav">
-                      <li><a href="/status.html">Status</a></li>
-                      <li><a href="/generalsettings.html">General</a></li>
-                      <li><a href="/networksettings.html">Network</a></li>
-                      <li><a href="/irremote.html">IR Remote</a></li>
-                      <li class="active"><a href="/tools.html">Tools</a></li>
-                      <li><a href="/login.html?DISCONNECT=YES">Logout</a></li>
+                        <li><a href="/status.html">Status</a></li>
+                        <li><a href="/generalsettings.html">General</a></li>
+                        <li><a href="/networksettings.html">Network</a></li>
+                        <li><a href="/remote.html">Remote</a></li>
+                        <li class="active"><a href="/tools.html">Tools</a></li>
+                        <li><a href="/login.html?DISCONNECT=YES">Logout</a></li>
                     </ul>
                 </div>
             </div>
@@ -40,13 +62,15 @@
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="restart">Keep settings</label>
                         <div class="col-sm-10">
-                            <button type="submit" class="btn btn-default" id="restart" name="restart"  onclick="javascript: if (!confirm('Are you sure?')) { return false; }">Restart</button>
+                            <button type="submit" class="btn btn-default" id="restart" name="restart"
+                                onclick="javascript: if (!confirm('Are you sure?')) { return false; }">Restart</button>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="reset">Default settings</label>
                         <div class="col-sm-10">
-                            <button type="submit" class="btn btn-default" id="reset" name="reset" onclick="javascript: if (!confirm('Are you sure?')) { return false; }">Reset</button>
+                            <button type="submit" class="btn btn-default" id="reset" name="reset"
+                                onclick="javascript: if (!confirm('Are you sure?')) { return false; }">Reset</button>
                         </div>
                     </div>
 
@@ -65,4 +89,5 @@
 
     </div>
 </body>
+
 </html>

@@ -16,11 +16,12 @@
 #ifndef NTP_H
 #define NTP_H
 
-#include <Arduino.h>
-#include <ESP8266WiFi.h>
 #include <TimeLib.h>
 #include <WiFiUdp.h>
 
+#include "common.h"
+
+#define NTP_REFRESH_INTERVAL 3600
 #define LOCALPORT     2390 // Local port to listen for UDP packets
 #define NTP_PACKET_SIZE 48 // NTP time stamp is in the first 48 bytes of the message
 

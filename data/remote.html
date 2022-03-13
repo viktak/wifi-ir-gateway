@@ -1,7 +1,29 @@
 ﻿<!DOCTYPE html>
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
-%pageheader%
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>ActoSenso Node</title>
+    <link href="favico.ico" rel="shortcut icon" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+
+    <!-- Latest compiled and minified CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/cerulean/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-fUMURLTdEcpeYHly3PAwggI3l2UvdHNg/I+8LRph7hLDcAZm77YfDx3Tjum9d3vK" crossorigin="anonymous">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+        integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+        crossorigin="anonymous"></script>
+
+</head>
+
 <body>
     <script>
         function submitButtons(vv) {
@@ -29,7 +51,7 @@
                         <li><a href="/status.html">Status</a></li>
                         <li><a href="/generalsettings.html">General</a></li>
                         <li><a href="/networksettings.html">Network</a></li>
-                        <li class="active"><a href="/irremote.html">IR remote</a></li>
+                        <li class="active"><a href="/remote.html">Remote</a></li>
                         <li><a href="/tools.html">Tools</a></li>
                         <li><a href="/login.html?DISCONNECT=YES">Logout</a></li>
                     </ul>
@@ -52,7 +74,9 @@
                         <div class="panel-body">
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnAmplifierOnOff" id="btnAmplifierOnOff" name="btnAmplifierOnOff" onclick="submitButtons('btnAmplifierOnOff');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnAmplifierOnOff" id="btnAmplifierOnOff" name="btnAmplifierOnOff"
+                                        onclick="submitButtons('btnAmplifierOnOff');">
                                         <span class="glyphicon glyphicon-off"></span>
                                         On/Off
                                     </button>
@@ -61,40 +85,57 @@
 
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnAmplifierDVD" id="btnAmplifierDVD" name="btnAmplifierDVD" onclick="submitButtons('btnAmplifierDVD');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnAmplifierDVD" id="btnAmplifierDVD" name="btnAmplifierDVD"
+                                        onclick="submitButtons('btnAmplifierDVD');">
                                         BD/DVD
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnAmplifierTV" id="btnAmplifierTV" name="btnAmplifierTV" onclick="submitButtons('btnAmplifierTV');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnAmplifierTV" id="btnAmplifierTV" name="btnAmplifierTV"
+                                        onclick="submitButtons('btnAmplifierTV');">
                                         TV
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnAmplifierNet" id="btnAmplifierNet" name="btnAmplifierNet" onclick="submitButtons('btnAmplifierNet');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnAmplifierNet" id="btnAmplifierNet" name="btnAmplifierNet"
+                                        onclick="submitButtons('btnAmplifierNet');">
                                         Net
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnAmplifierRadio" id="btnAmplifierRadio" name="btnAmplifierRadio" onclick="submitButtons('btnAmplifierRadio');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnAmplifierRadio" id="btnAmplifierRadio" name="btnAmplifierRadio"
+                                        onclick="submitButtons('btnAmplifierRadio');">
                                         Radio
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div class="row">
                                 <div class="col-sm-5">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnAmplifierVolumePlus" id="btnAmplifierVolumePlus" name="btnAmplifierVolumePlus" onclick="submitButtons('btnAmplifierVolumePlus');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnAmplifierVolumePlus" id="btnAmplifierVolumePlus"
+                                        name="btnAmplifierVolumePlus"
+                                        onclick="submitButtons('btnAmplifierVolumePlus');">
                                         <span class="glyphicon glyphicon-volume-up"></span>
                                     </button>
                                 </div>
                                 <div class="col-sm-2">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnAmplifierVolumeMute" id="btnAmplifierVolumeMute" name="btnAmplifierVolumeMute" onclick="submitButtons('btnAmplifierVolumeMute');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnAmplifierVolumeMute" id="btnAmplifierVolumeMute"
+                                        name="btnAmplifierVolumeMute"
+                                        onclick="submitButtons('btnAmplifierVolumeMute');">
                                         <span class="glyphicon glyphicon-volume-off"></span>
                                     </button>
                                 </div>
                                 <div class="col-sm-5">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnAmplifierVolumeMinus" id="btnAmplifierVolumeMinus" name="btnAmplifierVolumeMinus" onclick="submitButtons('btnAmplifierVolumeMinus');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnAmplifierVolumeMinus" id="btnAmplifierVolumeMinus"
+                                        name="btnAmplifierVolumeMinus"
+                                        onclick="submitButtons('btnAmplifierVolumeMinus');">
                                         <span class="glyphicon glyphicon-volume-down"></span>
                                     </button>
                                 </div>
@@ -102,13 +143,17 @@
 
                             <div class="row">
                                 <div class="col-sm-6">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnTVProgramUp" id="btnTVProgramUp" name="btnTVProgramUp" onclick="submitButtons('btnTVProgramUp');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnTVProgramUp" id="btnTVProgramUp" name="btnTVProgramUp"
+                                        onclick="submitButtons('btnTVProgramUp');">
                                         Program
                                         <span class="glyphicon glyphicon-plus"></span>
                                     </button>
                                 </div>
                                 <div class="col-sm-6">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnTVProgramDown" id="btnTVProgramDown" name="btnTVProgramDown" onclick="submitButtons('btnTVProgramDown');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnTVProgramDown" id="btnTVProgramDown" name="btnTVProgramDown"
+                                        onclick="submitButtons('btnTVProgramDown');">
                                         Program
                                         <span class="glyphicon glyphicon-minus"></span>
                                     </button>
@@ -119,13 +164,16 @@
                                 <div class="col-sm-3">
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnTuningUp" id="btnTuningUp" name="btnTuningUp" onclick="submitButtons('btnTuningUp');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnTuningUp"
+                                        id="btnTuningUp" name="btnTuningUp" onclick="submitButtons('btnTuningUp');">
                                         Tuning
                                         <span class="glyphicon glyphicon-plus"></span>
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnTuningDown" id="btnTuningDown" name="btnTuningDown" onclick="submitButtons('btnTuningDown');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnTuningDown"
+                                        id="btnTuningDown" name="btnTuningDown"
+                                        onclick="submitButtons('btnTuningDown');">
                                         Tuning
                                         <span class="glyphicon glyphicon-minus"></span>
                                     </button>
@@ -136,22 +184,30 @@
 
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericOne" id="btnNumericOne" name="btnNumericOne" onclick="submitButtons('btnNumericOne');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericOne"
+                                        id="btnNumericOne" name="btnNumericOne"
+                                        onclick="submitButtons('btnNumericOne');">
                                         1
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericTwo" id="btnNumericTwo" name="btnNumericTwo" onclick="submitButtons('btnNumericTwo');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericTwo"
+                                        id="btnNumericTwo" name="btnNumericTwo"
+                                        onclick="submitButtons('btnNumericTwo');">
                                         2
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericThree" id="btnNumericThree" name="btnNumericThree" onclick="submitButtons('btnNumericThree');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnNumericThree" id="btnNumericThree" name="btnNumericThree"
+                                        onclick="submitButtons('btnNumericThree');">
                                         3
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericFour" id="btnNumericFour" name="btnNumericFour" onclick="submitButtons('btnNumericFour');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnNumericFour" id="btnNumericFour" name="btnNumericFour"
+                                        onclick="submitButtons('btnNumericFour');">
                                         4
                                     </button>
                                 </div>
@@ -159,22 +215,30 @@
 
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericFive" id="btnNumericFive" name="btnNumericFive" onclick="submitButtons('btnNumericFive');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnNumericFive" id="btnNumericFive" name="btnNumericFive"
+                                        onclick="submitButtons('btnNumericFive');">
                                         5
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericSix" id="btnNumericSix" name="btnNumericSix" onclick="submitButtons('btnNumericSix');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericSix"
+                                        id="btnNumericSix" name="btnNumericSix"
+                                        onclick="submitButtons('btnNumericSix');">
                                         6
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericSeven" id="btnNumericSeven" name="btnNumericSeven" onclick="submitButtons('btnNumericSeven');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnNumericSeven" id="btnNumericSeven" name="btnNumericSeven"
+                                        onclick="submitButtons('btnNumericSeven');">
                                         7
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericEight" id="btnNumericEight" name="btnNumericEight" onclick="submitButtons('btnNumericEight');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnNumericEight" id="btnNumericEight" name="btnNumericEight"
+                                        onclick="submitButtons('btnNumericEight');">
                                         8
                                     </button>
                                 </div>
@@ -182,23 +246,30 @@
 
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericNine" id="btnNumericNine" name="btnNumericNine" onclick="submitButtons('btnNumericNine');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnNumericNine" id="btnNumericNine" name="btnNumericNine"
+                                        onclick="submitButtons('btnNumericNine');">
                                         9
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnNumericZero" id="btnNumericZero" name="btnNumericZero" onclick="submitButtons('btnNumericZero');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg"
+                                        value="btnNumericZero" id="btnNumericZero" name="btnNumericZero"
+                                        onclick="submitButtons('btnNumericZero');">
                                         0
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnPresetUp" id="btnPresetUp" name="btnPresetUp" onclick="submitButtons('btnPresetUp');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnPresetUp"
+                                        id="btnPresetUp" name="btnPresetUp" onclick="submitButtons('btnPresetUp');">
                                         Preset
                                         <span class="glyphicon glyphicon-plus"></span>
                                     </button>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnPresetDown" id="btnPresetDown" name="btnPresetDown" onclick="submitButtons('btnPresetDown');">
+                                    <button type="button" class="btn btn-default btn-block btn-lg" value="btnPresetDown"
+                                        id="btnPresetDown" name="btnPresetDown"
+                                        onclick="submitButtons('btnPresetDown');">
                                         Preset
                                         <span class="glyphicon glyphicon-minus"></span>
                                     </button>
@@ -212,7 +283,7 @@
                         </div>
 
                     </div>
-                    
+
                 </div>
             </div>
         </form>
@@ -222,4 +293,5 @@
 
     </div>
 </body>
+
 </html>

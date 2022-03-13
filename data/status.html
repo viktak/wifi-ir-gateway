@@ -1,7 +1,29 @@
 ﻿<!DOCTYPE html>
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
-%pageheader%
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>ActoSenso Node</title>
+    <link href="favico.ico" rel="shortcut icon" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+
+    <!-- Latest compiled and minified CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/cerulean/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-fUMURLTdEcpeYHly3PAwggI3l2UvdHNg/I+8LRph7hLDcAZm77YfDx3Tjum9d3vK" crossorigin="anonymous">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+        integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+        crossorigin="anonymous"></script>
+
+</head>
+
 <body>
     <div class="container-fluid">
         <nav class="navbar navbar-default">
@@ -19,7 +41,7 @@
                         <li class="active"><a href="/status.html">Status</a></li>
                         <li><a href="/generalsettings.html">General</a></li>
                         <li><a href="/networksettings.html">Network</a></li>
-                        <li><a href="/irremote.html">IR Remote</a></li>
+                        <li><a href="/remote.html">Remote</a></li>
                         <li><a href="/tools.html">Tools</a></li>
                         <li><a href="/login.html?DISCONNECT=YES">Logout</a></li>
                     </ul>
@@ -28,47 +50,6 @@
         </nav>
         <div class="well">
             These are the current settings of this ESP.
-        </div>
-
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h2>Node: %espid%</h2>
-            </div>
-            <div class="panel-body">
-                <table class="table table-hover">
-                    <tbody>
-                        <tr>
-                            <td width="40%">
-                                Hardware ID:
-                            </td>
-                            <td width="60%">
-                                %hardwareid%
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Hardware version:</td>
-                            <td>%hardwareversion%</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                Firmware ID:
-                            </td>
-                            <td>
-                                %firmwareid%
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                Firmware version:
-                            </td>
-                            <td>
-                                %firmwareversion%
-                            </td>
-                        </tr>
-
-                    </tbody>
-                </table>
-            </div>
         </div>
 
         <div class="panel panel-default">
@@ -92,6 +73,34 @@
                             </td>
                             <td>
                                 %chipid%
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Hardware ID:
+                            </td>
+                            <td>
+                                %hardwareid%
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Hardware version:</td>
+                            <td>%hardwareversion%</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Firmware ID:
+                            </td>
+                            <td>
+                                %firmwareid%
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Firmware version:
+                            </td>
+                            <td>
+                                %firmwareversion%
                             </td>
                         </tr>
                         <tr>
@@ -180,6 +189,10 @@
                             <td>%ssid%</td>
                         </tr>
                         <tr>
+                            <td>Channel</td>
+                            <td>%channel%</td>
+                        </tr>
+                        <tr>
                             <td>Network address</td>
                             <td>%networkaddress%</td>
                         </tr>
@@ -197,9 +210,10 @@
         </div>
 
         <div class="well well-sm">
-          (c)2016-%year% Viktor Takacs - <a href="http://diy.viktak.com" target="_blank">diy.viktak.com</a>
+            (c)2016-%year% Viktor Takacs - <a href="http://diy.viktak.com" target="_blank">diy.viktak.com</a>
         </div>
 
     </div>
 </body>
+
 </html>

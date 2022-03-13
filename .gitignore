@@ -5,4 +5,4 @@
 .pio/**
 .vscode/**
 buildserialnumber
-src/version.h
+include/version.h

@@ -1,7 +1,29 @@
 ﻿<!DOCTYPE html>
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
-%pageheader%
+
+<head>
+    <meta charset="utf-8" />
+
+    <title>ActoSenso Node</title>
+    <link href="favico.ico" rel="shortcut icon" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+
+    <!-- Latest compiled and minified CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/cerulean/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-fUMURLTdEcpeYHly3PAwggI3l2UvdHNg/I+8LRph7hLDcAZm77YfDx3Tjum9d3vK" crossorigin="anonymous">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+        integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+        crossorigin="anonymous"></script>
+
+</head>
+
 <body>
     <div class="container-fluid">
         <nav class="navbar navbar-default">
@@ -16,12 +38,12 @@
                 </div>
                 <div class="collapse navbar-collapse" id="myNavbar">
                     <ul class="nav navbar-nav">
-                      <li><a href="/status.html">Status</a></li>
-                      <li class="active"><a href="/generalsettings.html">General</a></li>
-                      <li><a href="/networksettings.html">Network</a></li>
-                      <li><a href="/irremote.html">IR Remote</a></li>
-                      <li><a href="/tools.html">Tools</a></li>
-                      <li><a href="/login.html?DISCONNECT=YES">Logout</a></li>
+                        <li><a href="/status.html">Status</a></li>
+                        <li class="active"><a href="/generalsettings.html">General</a></li>
+                        <li><a href="/networksettings.html">Network</a></li>
+                        <li><a href="/remote.html">Remote</a></li>
+                        <li><a href="/tools.html">Tools</a></li>
+                        <li><a href="/login.html?DISCONNECT=YES">Logout</a></li>
                     </ul>
                 </div>
             </div>
@@ -41,61 +63,68 @@
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="friendlyname">Friendly name of node:</label>
                         <div class="col-sm-10">
-                            <input type="text" class="form-control" id="friendlyname" name="friendlyname" placeholder="Enter a friendly name for the node" value="%friendlyname%" maxlength="30">
+                            <input type="text" class="form-control" id="friendlyname" name="friendlyname"
+                                placeholder="Enter a friendly name for the node" value="%friendlyname%" maxlength="30">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="heartbeatinterval">Send heartbeat</label>
                         <div class="col-sm-10">
-                            <input type="text" class="form-control" id="heartbeatinterval" name="heartbeatinterval" placeholder="Heartbeat frequency" value="%heartbeatinterval%" maxlength="4">
+                            <input type="text" class="form-control" id="heartbeatinterval" name="heartbeatinterval"
+                                placeholder="Heartbeat frequency" value="%heartbeatinterval%" maxlength="4">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="timezoneselector">Time zone:</label>
                         <div class="col-sm-10">
-                          <select class="form-control" name="timezoneselector" id="timezoneselector">
-                            %timezoneslist%
-                          </select>
+                            <select class="form-control" name="timezoneselector" id="timezoneselector">
+                                %timezoneslist%
+                            </select>
 
                         </div>
                     </div>
+
 
                 </div>
 
-            </div>
-
-            <div class="panel panel-default">
-                <div class="panel-heading">MQTT broker</div>
-                <div class="panel-body">
-                    <div class="well well-sm">
-                        As a test (or backup) server you can use <code>test.mosquitto.org:1883</code>.
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-sm-2" for="mqttbroker">MQTT broker:</label>
-                        <div class="col-sm-10">
-                            <input type="text" class="form-control" id="mqttbroker" name="mqttbroker" placeholder="Enter a server name or IP address" value="%mqtt-servername%" maxlength="50">
+                <div class="panel panel-default">
+                    <div class="panel-heading">MQTT broker</div>
+                    <div class="panel-body">
+                        <div class="well well-sm">
+                            As a test (or backup) server you can use <code>test.mosquitto.org:1883</code>.
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-sm-2" for="mqttport">MQTT port:</label>
-                        <div class="col-sm-10">
-                            <input type="number" class="form-control" id="mqttport" name="mqttport" placeholder="Enter port number" value="%mqtt-port%">
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="mqttbroker">MQTT broker:</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="mqttbroker" name="mqttbroker"
+                                    placeholder="Enter a server name or IP address" value="%mqtt-servername%"
+                                    maxlength="50">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-sm-2" for="mqtttopic">MQTT topic:</label>
-                        <div class="col-sm-10">
-                            <input type="text" class="form-control" id="mqtttopic" name="mqtttopic" placeholder="Enter a topic" value="%mqtt-topic%" maxlength="32">
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="mqttport">MQTT port:</label>
+                            <div class="col-sm-10">
+                                <input type="number" class="form-control" id="mqttport" name="mqttport"
+                                    placeholder="Enter port number" value="%mqtt-port%">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="mqtttopic">MQTT topic:</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="mqtttopic" name="mqtttopic"
+                                    placeholder="Enter a topic" value="%mqtt-topic%" maxlength="31">
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="">
-                <button type="submit" class="btn btn-default" onclick="javascript: alert('The system is now restarting. Please wait for a few seconds, then refresh this page.')">Save settings</button>
-            </div>
+                <div class="">
+                    <button type="submit" class="btn btn-default"
+                        onclick="javascript: alert('The system is now restarting. Please wait for a few seconds, then refresh this page.')">Save
+                        settings</button>
+                </div>
 
         </form>
         <p></p>
@@ -105,4 +134,5 @@
 
     </div>
 </body>
+
 </html>
